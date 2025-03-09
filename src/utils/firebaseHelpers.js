@@ -1,5 +1,6 @@
+import { push, ref, set } from "firebase/database";
+
 import { database } from "../firebaseConfig";
-import { ref, set, push } from "firebase/database";
 
 // Write Data to Firebase
 export const writeData = (path, data) => {

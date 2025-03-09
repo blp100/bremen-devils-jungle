@@ -1,6 +1,6 @@
+import { getAnalytics } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { getAnalytics } from "firebase/analytics";
 
 // 🔥 Replace with your own Firebase config from Firebase Console
 const firebaseConfig = {

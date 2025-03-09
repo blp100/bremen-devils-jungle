@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { database } from "../firebaseConfig.js"
-import { ref, onValue } from "firebase/database";
+import { onValue, ref } from "firebase/database";
+
 import { writeData } from "../utils/firebaseHelpers";
+
+import { database } from "../firebaseConfig.js";
 
 export default function DataComponent() {
   const [data, setData] = useState(null);
@@ -32,7 +34,9 @@ export default function DataComponent() {
         Write Data
       </button>
       <button
-        onClick={() => writeData("messages", { "job description": "Best Frontend" })}
+        onClick={() =>
+          writeData("messages", { "job description": "Best Frontend" })
+        }
       >
         Write the Job Description
       </button>
