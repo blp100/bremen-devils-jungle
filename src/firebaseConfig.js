@@ -1,6 +1,5 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { getAnalytics } from "firebase/analytics";
 
 // 🔥 Replace with your own Firebase config from Firebase Console
 const firebaseConfig = {
@@ -17,7 +16,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
 // Initialize Realtime Database
 export const database = getDatabase(app);
