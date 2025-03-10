@@ -8,7 +8,7 @@ import {
 } from "../utils";
 import { useData } from "../utils/firebaseHelpers";
 
-import { GAME_STATUS } from "../constants";
+import { GAME_STATUS, PLAYER_COUNT } from "../constants";
 
 const Admin = () => {
   const { data } = useData();
@@ -17,7 +17,8 @@ const Admin = () => {
 
   const startGame = useStartGame();
   const playerCount = Object.values(players || {}).length;
-  const hasEnoughPlayers = playerCount === 12;
+  const hasEnoughPlayers = playerCount >= PLAYER_COUNT.MIN;
+  const hasReachedMaxPlayers = playerCount >= PLAYER_COUNT.MAX;
 
   return (
     <div>
@@ -33,10 +34,18 @@ const Admin = () => {
       )}
       {game?.status === GAME_STATUS.JOINING && (
         <button
-          disabled={hasEnoughPlayers}
-          onClick={() => createDummyPlayers(12 - playerCount)}
+          disabled={hasReachedMaxPlayers}
+          onClick={() => createDummyPlayers(10, playerCount)}
         >
-          Create dummy players
+          Create 10 dummy players
+        </button>
+      )}
+      {game?.status === GAME_STATUS.JOINING && (
+        <button
+          disabled={hasReachedMaxPlayers}
+          onClick={() => createDummyPlayers(1, playerCount)}
+        >
+          Create 1 dummy player
         </button>
       )}
       <button onClick={resetGame}>Reset</button>

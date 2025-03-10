@@ -1,4 +1,10 @@
-import { DB_PATH, GAME_STATUS, PLAYER_TYPE } from "../constants";
+import {
+  CORE_PLAYER_TYPES,
+  DB_PATH,
+  GAME_STATUS,
+  OPTIONAL_PLAYER_TYPE,
+  PLAYER_TYPE,
+} from "../constants";
 
 import { useData, setData, updateData } from "./firebaseHelpers";
 
@@ -61,14 +67,24 @@ const getRandomPlayerAttributeList = (playerCount: number) => {
   const elementList = <{ type: PLAYER_TYPE; elementCount: number }[]>[];
   const result = <IPlayerAttribute[]>[];
 
-  // TODO: Handle player assignment when player number != 12
-  // https://github.com/blp100/bremen-devils-jungle/issues/3
-  const types = Object.values(PLAYER_TYPE);
-  for (let count = 1; count <= 4; count++) {
-    for (let typeIndex = 0; typeIndex < types.length; typeIndex++) {
-      elementList.push({ type: types[typeIndex], elementCount: count });
+  const coreElementCount = Math.floor(playerCount / CORE_PLAYER_TYPES.length);
+  const optionalElementCount = playerCount % CORE_PLAYER_TYPES.length;
+
+  for (let typeIndex = 0; typeIndex < CORE_PLAYER_TYPES.length; typeIndex++) {
+    for (let count = 1; count <= coreElementCount; count++) {
+      elementList.push({
+        type: CORE_PLAYER_TYPES[typeIndex],
+        elementCount: count,
+      });
     }
   }
+  for (let count = 1; count <= optionalElementCount; count++) {
+    elementList.push({
+      type: OPTIONAL_PLAYER_TYPE,
+      elementCount: count,
+    });
+  }
+
   shuffle(elementList);
 
   for (let i = 0; i < playerCount; i++) {

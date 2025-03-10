@@ -17,7 +17,21 @@ export enum PLAYER_TYPE {
   FIRE = "fire",
   WATER = "water",
   WOOD = "wood",
+  ELECTRIC = "electric",
 }
+
+export enum PLAYER_COUNT {
+  MIN = 10,
+  MAX = 14,
+}
+
+export const CORE_PLAYER_TYPES = [
+  PLAYER_TYPE.FIRE,
+  PLAYER_TYPE.WATER,
+  PLAYER_TYPE.WOOD,
+];
+
+export const OPTIONAL_PLAYER_TYPE = PLAYER_TYPE.ELECTRIC;
 
 export enum GAME_STAGE_TYPE {
   DISCUSSION = "discussion",
