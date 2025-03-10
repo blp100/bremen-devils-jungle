@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react";
-import { onValue, push, ref, set } from "firebase/database";
+import { onValue, ref, set, update } from "firebase/database";
 
 import { database } from "../firebaseConfig";
 
-// Write Data to Firebase
-export const writeData = (path, data) => {
-  set(ref(database, path), data)
-    .then(() => console.log("Data written successfully"))
-    .catch((error) => console.error("Error writing data:", error));
+export const setData = async (path, data) => {
+  try {
+    await set(ref(database, path), data);
+    return console.log("Data set successfully");
+  } catch (error) {
+    return console.error("Error setting data:", error);
+  }
 };
 
-// Add Data with Auto-Generated ID
-export const addData = (path, data) => {
-  const newRef = push(ref(database, path));
-  set(newRef, data)
-    .then(() => console.log("Data added successfully"))
-    .catch((error) => console.error("Error adding data:", error));
+export const updateData = async (path, data) => {
+  try {
+    await update(ref(database, path), data);
+    return console.log("Data updated successfully");
+  } catch (error) {
+    return console.error("Error updating data:", error);
+  }
 };
 
 export const useData = (path) => {
