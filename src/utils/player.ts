@@ -17,12 +17,14 @@ export const createPlayer = async (nickname: string) => {
   return id;
 };
 
-export const usePlayer = (id: string): { data?: IPlayer; loading: boolean } => {
+export const usePlayer = (
+  id?: string,
+): { data: IPlayer | null; loading: boolean } => {
   return useData(`${DB_PATH.PLAYERS}/${id}`);
 };
 
 export const usePlayers = (): {
-  data?: { [key: string]: IPlayer };
+  data: { [key: string]: IPlayer } | null;
   loading: boolean;
 } => {
   return useData(DB_PATH.PLAYERS);

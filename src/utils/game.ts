@@ -6,7 +6,7 @@ import {
   PLAYER_TYPE,
 } from "../constants";
 
-import { useData, setData, updateData } from "./firebaseHelpers";
+import { useData, setData, updateData } from "./firebaseHelpers.ts";
 
 import { IGame } from "../interfaces";
 
@@ -32,7 +32,7 @@ export const resetGame = () => {
   setData(DB_PATH.PLAYERS, {});
 };
 
-export const useGame = (): { data?: IGame; loading: boolean } => {
+export const useGame = (): { data: IGame | null; loading: boolean } => {
   return useData(DB_PATH.GAME);
 };
 
