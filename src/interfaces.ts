@@ -1,4 +1,4 @@
-import { GAME_STAGE_TYPE, PLAYER_TYPE } from "./constants";
+import { GAME_STAGE_TYPE, PLAYER_TYPE, GAME_STATUS } from "./constants";
 
 export type IGameStage = IDiscussionStage | ICombatStage | IEvolutionStage;
 
@@ -15,7 +15,7 @@ export interface IPlayer {
 }
 export interface IGame {
   createdAt: string;
-  status: number;
+  status: GAME_STATUS;
   stageIndex: number;
 }
 
