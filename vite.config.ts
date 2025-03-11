@@ -1,6 +1,8 @@
 import react from "@vitejs/plugin-react";
 import { transformWithEsbuild } from "vite";
 import restart from "vite-plugin-restart";
+import path from "path";
+import tailwindcss from "@tailwindcss/vite";
 
 export default {
   root: "src/",
@@ -11,6 +13,9 @@ export default {
 
     // React support
     react(),
+
+    // tailwindCSS support
+    tailwindcss(),
 
     // .js file support as if it was JSX
     {
@@ -25,6 +30,11 @@ export default {
       },
     },
   ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   server: {
     host: true, // Open to local network and display URL
     open: !("SANDBOX_URL" in process.env || "CODESANDBOX_HOST" in process.env), // Open if it's not a CodeSandbox
