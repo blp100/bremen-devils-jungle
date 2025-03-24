@@ -1,5 +1,5 @@
 import { IPlayer } from "@/interfaces";
-import { PLAYER_TYPE } from "@/constants";
+import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
 
 export const getAttackResult = (
   attacker: IPlayer,
@@ -8,7 +8,10 @@ export const getAttackResult = (
 ) => {
   // check for evolution cards
   // check base on elements
-  return _canAttackBasedOnElement(attacker, target, maxElementCount);
+  return (
+    _canAttackBasedOnElement(attacker, target, maxElementCount) &&
+    _canAttackBasedOnEvolutionCards(attacker, target)
+  );
   // return {attacker, target, result}
 };
 
@@ -48,7 +51,14 @@ const _canAttackBasedOnElementCount = (
   return true;
 };
 
-// const _canAttackBasedOnEvolutionCards = (
-//   attacker: IPlayer,
-//   target: IPlayer,
-// ) => {};
+const _canAttackBasedOnEvolutionCards = (
+  attacker: IPlayer,
+  target: IPlayer,
+) => {
+  if (
+    attacker.evolutionCards.includes(EVOLUTION_TRAITS.AMPHIBIOUS) &&
+    attacker.type === target.type
+  )
+    return true;
+  return false;
+};
