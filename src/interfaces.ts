@@ -11,7 +11,7 @@ export interface IPlayer {
   hp: number;
   protected: boolean;
   attackCards: { [playerNumber: number]: number };
-  evolutionCards: number[];
+  evolutionCards: string[];
 }
 export interface IGame {
   createdAt: string;

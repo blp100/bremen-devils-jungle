@@ -6,13 +6,30 @@ export const getAttackResult = (
   target: IPlayer,
   maxElementCount: number,
 ) => {
-  // check for evolution cards
   // check base on elements
-  return (
-    _canAttackBasedOnElement(attacker, target, maxElementCount) &&
-    _canAttackBasedOnEvolutionCards(attacker, target)
+  const elementBasedAttack = _canAttackBasedOnElement(
+    attacker,
+    target,
+    maxElementCount,
   );
-  // return {attacker, target, result}
+  // check for evolution cards
+  const evolutionBasedAttack = _canAttackBasedOnEvolutionCards(
+    attacker,
+    target,
+  );
+
+  const success = elementBasedAttack || evolutionBasedAttack;
+
+  return {
+    status: success,
+    reason: success
+      ? "Attack successful"
+      : elementBasedAttack
+        ? "Attack failed due to evolution traits"
+        : "Attack failed due to element rules",
+    attacker,
+    target,
+  };
 };
 
 const FAILED_ATTACK_MAP = {
@@ -56,7 +73,7 @@ const _canAttackBasedOnEvolutionCards = (
   target: IPlayer,
 ) => {
   if (
-    attacker.evolutionCards.includes(EVOLUTION_TRAITS.AMPHIBIOUS) &&
+    attacker.evolutionCards?.includes(EVOLUTION_TRAITS.AMPHIBIOUS) &&
     attacker.type === target.type
   )
     return true;
