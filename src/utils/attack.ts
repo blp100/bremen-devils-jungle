@@ -1,11 +1,15 @@
 import { IPlayer } from "@/interfaces";
 import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
+import { updateData } from "@/utils/firebaseHelpers";
 
-export const getAttackResult = (
+export const getAttackResult = async (
   attacker: IPlayer,
   target: IPlayer,
   maxElementCount: number,
 ) => {
+  const updatedAttacker = { ...attacker };
+  const updatedTarget = { ...target };
+
   // check base on elements
   const elementBasedAttack = _canAttackBasedOnElement(
     attacker,
@@ -20,6 +24,17 @@ export const getAttackResult = (
 
   const success = elementBasedAttack || evolutionBasedAttack;
 
+  const damage = 3;
+  if (success) {
+    updatedAttacker.hp += Math.max(damage);
+    updatedTarget.hp = Math.max(0, target.hp - damage);
+    updatedTarget.protected = true;
+  }
+
+  // update players' status into Firebase Database
+  await updateData(`players/${updatedAttacker.id}`, updatedAttacker);
+  await updateData(`players/${updatedTarget.id}`, updatedTarget);
+
   return {
     status: success,
     reason: success
@@ -27,8 +42,8 @@ export const getAttackResult = (
       : elementBasedAttack
         ? "Attack failed due to evolution traits"
         : "Attack failed due to element rules",
-    attacker,
-    target,
+    attacker: updatedAttacker,
+    target: updatedTarget,
   };
 };
 
