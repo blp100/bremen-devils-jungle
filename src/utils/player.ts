@@ -1,6 +1,6 @@
 import { DB_PATH } from "../constants";
 
-import { useData, setData } from "./firebaseHelpers";
+import { useData, setData } from "../services/firebaseHelpers";
 
 import { IPlayer } from "../interfaces";
 

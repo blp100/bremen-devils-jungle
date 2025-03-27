@@ -6,7 +6,7 @@ import {
   usePlayers,
   useStartGame,
 } from "../utils";
-import { useData } from "../utils/firebaseHelpers";
+import { useData } from "../services/firebaseHelpers";
 
 import { GAME_STATUS, PLAYER_COUNT } from "../constants";
 import AttackPanel from "@/components/AttackPanel";

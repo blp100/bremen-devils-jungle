@@ -1,8 +1,7 @@
 import { IPlayer } from "@/interfaces";
 import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
-import { updateData } from "@/utils/firebaseHelpers";
 
-export const getAttackResult = async (
+export const getAttackResult = (
   attacker: IPlayer,
   target: IPlayer,
   maxElementCount: number,
@@ -24,17 +23,13 @@ export const getAttackResult = async (
 
   const success = elementBasedAttack || evolutionBasedAttack;
 
+  // TODO: Damage Test, remove later
   const damage = 3;
   if (success) {
     updatedAttacker.hp += Math.max(damage);
     updatedTarget.hp = Math.max(0, target.hp - damage);
     updatedTarget.protected = true;
   }
-
-  // update players' status into Firebase Database
-  await updateData(`players/${updatedAttacker.id}`, updatedAttacker);
-  await updateData(`players/${updatedTarget.id}`, updatedTarget);
-
   return {
     status: success,
     reason: success
@@ -47,6 +42,7 @@ export const getAttackResult = async (
   };
 };
 
+// element combat rules
 const FAILED_ATTACK_MAP = {
   [PLAYER_TYPE.FIRE]: PLAYER_TYPE.WATER,
   [PLAYER_TYPE.WATER]: PLAYER_TYPE.WOOD,

@@ -6,7 +6,7 @@ import {
   PLAYER_TYPE,
 } from "../constants";
 
-import { useData, setData, updateData } from "./firebaseHelpers";
+import { useData, setData, updateData } from "../services/firebaseHelpers";
 
 import { IGame } from "../interfaces";
 
