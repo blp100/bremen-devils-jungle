@@ -25,30 +25,13 @@ export const getAttackResult = (
 
   // TODO: Damage Test, remove later
   const damage = 3;
+
   if (success) {
+    applyTraitEffects(attacker, target, updatedAttacker, updatedTarget);
+
     updatedAttacker.hp += damage;
     updatedTarget.hp = Math.max(0, target.hp - damage);
     updatedTarget.protected = true;
-
-    // Apply evolution trait effects:
-    if (
-      attacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY) ||
-      target.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY)
-    ) {
-      updatedAttacker.hp += 2;
-      updatedTarget.hp = Math.max(0, updatedTarget.hp - 2);
-    }
-
-    if (
-      target.evolutionCards?.includes(EVOLUTION_TRAITS.DEADLY_POISON) &&
-      updatedTarget.hp === 0
-    ) {
-      updatedAttacker.hp = 0;
-    }
-
-    if (target.evolutionCards?.includes(EVOLUTION_TRAITS.SHARP_SPIKES)) {
-      updatedAttacker.hp = Math.max(0, updatedAttacker.hp - 2);
-    }
   }
 
   return {
@@ -110,4 +93,45 @@ const _canAttackBasedOnEvolutionCards = (
   )
     return true;
   return false;
+};
+
+const applyTraitEffects = (
+  attacker: IPlayer,
+  target: IPlayer,
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
+) => {
+  // SHARP_SPIKES (pre-combat): attacker takes 2 damage before attacking
+  if (target.evolutionCards?.includes(EVOLUTION_TRAITS.SHARP_SPIKES)) {
+    updatedAttacker.hp = Math.max(0, updatedAttacker.hp - 2);
+  }
+
+  // BLOODTHIRSTY: attacker gains HP, target takes more damage
+  if (attacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY)) {
+    updatedAttacker.hp += 2;
+    updatedTarget.hp = Math.max(0, updatedTarget.hp - 2);
+  }
+
+  // PARASITIC: if target survives, attacker gains 2 HP
+  if (
+    target.hp > 0 &&
+    attacker.evolutionCards?.includes(EVOLUTION_TRAITS.PARASITIC)
+  ) {
+    updatedAttacker.hp += 2;
+  }
+
+  // DEADLY_POISON: if target dies, attacker also dies
+  if (
+    target.evolutionCards?.includes(EVOLUTION_TRAITS.DEADLY_POISON) &&
+    updatedTarget.hp === 0
+  ) {
+    updatedAttacker.hp = 0;
+  }
+
+  // HIBERNATION: attacker becomes protected after successful attack
+  if (attacker.evolutionCards?.includes(EVOLUTION_TRAITS.HIBERNATION)) {
+    updatedAttacker.protected = true;
+  }
+
+  // TODO: Implement logic for other evolution traits if needed
 };
