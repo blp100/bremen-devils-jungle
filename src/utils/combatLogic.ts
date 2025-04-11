@@ -9,13 +9,13 @@ export const getAttackResult = (
   const updatedAttacker = { ...attacker };
   const updatedTarget = { ...target };
 
-  // check base on elements
+  // Check base on elements
   const elementBasedAttack = _canAttackBasedOnElement(
     attacker,
     target,
     maxElementCount,
   );
-  // check for evolution cards
+  // Check for evolution cards
   const evolutionBasedAttack = _canAttackBasedOnEvolutionCards(
     attacker,
     target,
@@ -26,10 +26,31 @@ export const getAttackResult = (
   // TODO: Damage Test, remove later
   const damage = 3;
   if (success) {
-    updatedAttacker.hp += Math.max(damage);
+    updatedAttacker.hp += damage;
     updatedTarget.hp = Math.max(0, target.hp - damage);
     updatedTarget.protected = true;
+
+    // Apply evolution trait effects:
+    if (
+      attacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY) ||
+      target.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY)
+    ) {
+      updatedAttacker.hp += 2;
+      updatedTarget.hp = Math.max(0, updatedTarget.hp - 2);
+    }
+
+    if (
+      target.evolutionCards?.includes(EVOLUTION_TRAITS.DEADLY_POISON) &&
+      updatedTarget.hp === 0
+    ) {
+      updatedAttacker.hp = 0;
+    }
+
+    if (target.evolutionCards?.includes(EVOLUTION_TRAITS.SHARP_SPIKES)) {
+      updatedAttacker.hp = Math.max(0, updatedAttacker.hp - 2);
+    }
   }
+
   return {
     status: success,
     reason: success
