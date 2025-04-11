@@ -37,7 +37,7 @@ export enum EVOLUTION_TRAITS {
   // First Round Evolution
   GENE_MUTATION = "Gene Mutation", // During the evolution phase, costs 3 less HP.
   DEADLY_POISON = "Deadly Poison", // During the attack phase, if the owner is the target and dies, the attacker dies as well.
-  BLOODTHIRSTY = "Bloodthirsty", // During the attack phase, if the attack succeeds, the owner gains 2 HP, and the target loses 2 additional HP.
+  BLOODTHIRSTY = "Bloodthirsty", // During the attack phase, when battling a player with the Bloodthirsty trait, the victor gains 2 HP, and the defeated player loses 2 additional HP.
   SHARP_SPIKES = "Sharp Spikes", // During the attack phase, when the owner is attacked, the attacker must lose 2 HP before combat.
   HORUS_EYE = "Horus' Eye", // During the discussion phase, the owner can view another player's HP.
 
