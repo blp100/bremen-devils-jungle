@@ -21,6 +21,8 @@ export const getAttackResult = (
     target,
   );
 
+  // TODO: Add Spikes trait correctly
+
   const success = elementBasedAttack || evolutionBasedAttack;
 
   // TODO: Damage Test, remove later
