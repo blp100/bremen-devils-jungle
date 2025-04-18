@@ -9,6 +9,9 @@ export const getAttackResult = (
   const updatedAttacker = { ...attacker };
   const updatedTarget = { ...target };
 
+  // Pre-combat trait effects
+  applyBeforeCombatTraits(updatedAttacker, updatedTarget);
+
   // Check base on elements
   const elementBasedAttack = _canAttackBasedOnElement(
     attacker,
@@ -21,15 +24,13 @@ export const getAttackResult = (
     target,
   );
 
-  // TODO: Add Spikes trait correctly
-
   const success = elementBasedAttack || evolutionBasedAttack;
 
   // TODO: Damage Test, remove later
   const damage = 3;
 
   if (success) {
-    applyTraitEffects(attacker, target, updatedAttacker, updatedTarget);
+    applyAfterCombatTraits(attacker, target, updatedAttacker, updatedTarget);
 
     updatedAttacker.hp += damage;
     updatedTarget.hp = Math.max(0, target.hp - damage);
@@ -97,17 +98,27 @@ const _canAttackBasedOnEvolutionCards = (
   return false;
 };
 
-const applyTraitEffects = (
+/**
+ * Apply evolution trait effects that occur before the combat result is determined.
+ * Example: SHARP_SPIKES — attacker takes damage before attacking.
+ */
+const applyBeforeCombatTraits = (
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
+) => {
+  if (updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.SHARP_SPIKES)) {
+    updatedAttacker.hp = Math.max(0, updatedAttacker.hp - 2);
+  }
+
+  // Future traits can go here...
+};
+
+const applyAfterCombatTraits = (
   attacker: IPlayer,
   target: IPlayer,
   updatedAttacker: IPlayer,
   updatedTarget: IPlayer,
 ) => {
-  // SHARP_SPIKES (pre-combat): attacker takes 2 damage before attacking
-  if (target.evolutionCards?.includes(EVOLUTION_TRAITS.SHARP_SPIKES)) {
-    updatedAttacker.hp = Math.max(0, updatedAttacker.hp - 2);
-  }
-
   // BLOODTHIRSTY: attacker gains HP, target takes more damage
   if (attacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY)) {
     updatedAttacker.hp += 2;
