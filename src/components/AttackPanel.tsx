@@ -1,19 +1,21 @@
-import { IPlayer } from "@/interfaces";
+import { IGame, IPlayer } from "@/interfaces";
 import { Button } from "@/components/ui/button";
 import { handlePlayerAttack } from "@/services/combatServices";
 
 type GameProps = {
+  game: IGame | null;
   players: { [key: string]: IPlayer } | null;
 };
 
-export default function AttackPanel({ players }: GameProps) {
+export default function AttackPanel({ players, game }: GameProps) {
   const handleAttack = async () => {
-    if (!players) return;
+    if (!players || !game) return;
 
     const result = await handlePlayerAttack(
       players[112627],
       players[114364],
-      4,
+      players,
+      game,
     );
     console.log(result.reason);
   };

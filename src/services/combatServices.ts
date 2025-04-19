@@ -1,6 +1,6 @@
-import { getAttackResult } from "@/utils/combatLogic";
+import { processCombatPhase } from "@/utils/combatLogic";
 import { updatePlayerStatusAfterAttack } from "@/services/updateData";
-import { IPlayer } from "@/interfaces";
+import { IPlayer, IGame } from "@/interfaces";
 
 /**
  * Handles player attack.
@@ -13,11 +13,12 @@ import { IPlayer } from "@/interfaces";
 export const handlePlayerAttack = async (
   attacker: IPlayer,
   target: IPlayer,
-  maxElementCount: number,
+  players: { [key: string]: IPlayer },
+  game: IGame,
 ) => {
-  const result = getAttackResult(attacker, target, maxElementCount);
+  const result = processCombatPhase(attacker, target, players, game);
 
-  if (result.status) {
+  if (result.success) {
     await updatePlayerStatusAfterAttack(result.attacker, result.target);
   }
 

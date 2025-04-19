@@ -51,7 +51,7 @@ const Admin = () => {
         </Button>
       )}
       <Button onClick={resetGame}>Reset</Button>
-      <AttackPanel players={players} />
+      <AttackPanel game={game} players={players} />
     </div>
   );
 };
