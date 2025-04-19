@@ -12,8 +12,8 @@ export default function AttackPanel({ players, game }: GameProps) {
     if (!players || !game) return;
 
     const result = await handlePlayerAttack(
-      players[112627],
-      players[114364],
+      players[165574],
+      players[181482],
       players,
       game,
     );

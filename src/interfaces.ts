@@ -19,7 +19,6 @@ export interface IGame {
   createdAt: string;
   status: GAME_STATUS;
   stageIndex: number;
-  phase?: "setup" | "combat" | "evolution" | "end";
   round?: number;
   maxElementCount: number;
   currentStage: {

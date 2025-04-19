@@ -50,9 +50,16 @@ export const useStartGame = () => {
       updateData(DB_PATH.PLAYERS + "/" + playerList[i].id, list[i]);
     }
 
+    const maxElementCount = playerCount % 4;
+
     updateData(DB_PATH.GAME, {
       status: GAME_STATUS.IN_PROGRESS,
       stageIndex: 0,
+      round: 0,
+      maxElementCount,
+      currentStage: {
+        damage: 3,
+      },
     });
   };
 };
@@ -61,6 +68,7 @@ interface IPlayerAttribute {
   number: number;
   type: PLAYER_TYPE;
   elementCount: number;
+  hp: number;
 }
 
 const getRandomPlayerAttributeList = (playerCount: number) => {
@@ -91,6 +99,7 @@ const getRandomPlayerAttributeList = (playerCount: number) => {
     result.push({
       ...elementList[i],
       number: i + 1,
+      hp: 25,
     });
   }
 
