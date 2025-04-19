@@ -33,6 +33,7 @@ export const resetGame = () => {
 };
 
 export const useGame = (): { data: IGame | null; loading: boolean } => {
+  console.log(useData(DB_PATH.GAME));
   return useData(DB_PATH.GAME);
 };
 
@@ -44,13 +45,11 @@ export const useStartGame = () => {
     playerList.sort((a, b) => a.id.localeCompare(b.id));
 
     const playerCount = playerList.length;
-    const list = getRandomPlayerAttributeList(playerCount);
+    const { list, maxElementCount } = getRandomPlayerAttributeList(playerCount);
 
     for (let i = 0; i < playerCount; i++) {
       updateData(DB_PATH.PLAYERS + "/" + playerList[i].id, list[i]);
     }
-
-    const maxElementCount = playerCount % 4;
 
     updateData(DB_PATH.GAME, {
       status: GAME_STATUS.IN_PROGRESS,
@@ -103,7 +102,7 @@ const getRandomPlayerAttributeList = (playerCount: number) => {
     });
   }
 
-  return result;
+  return { list: result, maxElementCount: coreElementCount };
 };
 
 const shuffle = (array: any[]) => {
