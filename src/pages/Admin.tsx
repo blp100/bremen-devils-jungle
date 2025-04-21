@@ -6,9 +6,11 @@ import {
   usePlayers,
   useStartGame,
 } from "../utils";
-import { useData } from "../utils/firebaseHelpers";
+import { useData } from "../services/firebaseHelpers";
 
 import { GAME_STATUS, PLAYER_COUNT } from "../constants";
+import AttackPanel from "@/components/AttackPanel";
+import { Button } from "@/components/ui/button";
 
 const Admin = () => {
   const { data } = useData();
@@ -25,30 +27,31 @@ const Admin = () => {
       <h1>Admin Page</h1>
       <pre>{JSON.stringify(data, null, 2)}</pre>
       {(!game || game?.status === GAME_STATUS.ENDED) && (
-        <button onClick={createGame}>Create new game</button>
+        <Button onClick={createGame}>Create new game</Button>
       )}
       {game?.status === GAME_STATUS.JOINING && (
-        <button disabled={!hasEnoughPlayers} onClick={startGame}>
+        <Button disabled={!hasEnoughPlayers} onClick={startGame}>
           Start
-        </button>
+        </Button>
       )}
       {game?.status === GAME_STATUS.JOINING && (
-        <button
+        <Button
           disabled={hasReachedMaxPlayers}
           onClick={() => createDummyPlayers(10, playerCount)}
         >
           Create 10 dummy players
-        </button>
+        </Button>
       )}
       {game?.status === GAME_STATUS.JOINING && (
-        <button
+        <Button
           disabled={hasReachedMaxPlayers}
           onClick={() => createDummyPlayers(1, playerCount)}
         >
           Create 1 dummy player
-        </button>
+        </Button>
       )}
-      <button onClick={resetGame}>Reset</button>
+      <Button onClick={resetGame}>Reset</Button>
+      <AttackPanel game={game} players={players} />
     </div>
   );
 };

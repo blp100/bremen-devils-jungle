@@ -11,12 +11,17 @@ export interface IPlayer {
   hp: number;
   protected: boolean;
   attackCards: { [playerNumber: number]: number };
-  evolutionCards: number[];
+  evolutionCards: string[];
+  minionId?: string; // for LION_KING
+  parasiticTargetId?: string; // for PARASITIC
 }
 export interface IGame {
   createdAt: string;
   status: GAME_STATUS;
   stageIndex: number;
+  round?: number;
+  maxElementCount: number;
+  damage: number;
 }
 
 interface IBaseGameStage {

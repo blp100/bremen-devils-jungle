@@ -1,12 +1,13 @@
 import {
   CORE_PLAYER_TYPES,
   DB_PATH,
+  GAME_STAGES,
   GAME_STATUS,
   OPTIONAL_PLAYER_TYPE,
   PLAYER_TYPE,
 } from "../constants";
 
-import { useData, setData, updateData } from "./firebaseHelpers";
+import { useData, setData, updateData } from "../services/firebaseHelpers";
 
 import { IGame } from "../interfaces";
 
@@ -33,7 +34,21 @@ export const resetGame = () => {
 };
 
 export const useGame = (): { data: IGame | null; loading: boolean } => {
-  return useData(DB_PATH.GAME);
+  const { data, loading } = useData<IGame>(DB_PATH.GAME);
+
+  const index = data?.stageIndex ?? -1;
+  const stage = GAME_STAGES[index];
+
+  const enrichedGame =
+    data && stage
+      ? {
+          ...data,
+          ...stage,
+        }
+      : data;
+
+  return { data: enrichedGame, loading };
+  // return useData(DB_PATH.GAME);
 };
 
 export const useStartGame = () => {
@@ -44,7 +59,7 @@ export const useStartGame = () => {
     playerList.sort((a, b) => a.id.localeCompare(b.id));
 
     const playerCount = playerList.length;
-    const list = getRandomPlayerAttributeList(playerCount);
+    const { list, maxElementCount } = getRandomPlayerAttributeList(playerCount);
 
     for (let i = 0; i < playerCount; i++) {
       updateData(DB_PATH.PLAYERS + "/" + playerList[i].id, list[i]);
@@ -53,6 +68,7 @@ export const useStartGame = () => {
     updateData(DB_PATH.GAME, {
       status: GAME_STATUS.IN_PROGRESS,
       stageIndex: 0,
+      maxElementCount,
     });
   };
 };
@@ -61,6 +77,7 @@ interface IPlayerAttribute {
   number: number;
   type: PLAYER_TYPE;
   elementCount: number;
+  hp: number;
 }
 
 const getRandomPlayerAttributeList = (playerCount: number) => {
@@ -91,17 +108,18 @@ const getRandomPlayerAttributeList = (playerCount: number) => {
     result.push({
       ...elementList[i],
       number: i + 1,
+      hp: 25,
     });
   }
 
-  return result;
+  return { list: result, maxElementCount: coreElementCount };
 };
 
 const shuffle = (array: any[]) => {
   let currentIndex = array.length;
 
   // While there remain elements to shuffle...
-  while (currentIndex != 0) {
+  while (currentIndex !== 0) {
     // Pick a remaining element...
     let randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
