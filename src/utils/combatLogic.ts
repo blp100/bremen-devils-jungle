@@ -27,7 +27,7 @@ export const processCombatPhase = (
     attacker,
     target,
     game.maxElementCount,
-    game.currentStage.damage,
+    game.damage,
   );
 
   // Reactive traits
@@ -53,7 +53,7 @@ export const processCombatPhase = (
           player,
           target,
           game.maxElementCount,
-          game.currentStage.damage,
+          game.damage,
         );
         result.damageDealt += minionResult.damageDealt;
         result.target = minionResult.target; // Update target state after minion attack

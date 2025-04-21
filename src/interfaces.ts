@@ -21,11 +21,7 @@ export interface IGame {
   stageIndex: number;
   round?: number;
   maxElementCount: number;
-  currentStage: {
-    type: string;
-    damage: number;
-    round: number;
-  };
+  damage: number;
 }
 
 interface IBaseGameStage {

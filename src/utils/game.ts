@@ -1,6 +1,8 @@
 import {
   CORE_PLAYER_TYPES,
   DB_PATH,
+  GAME_STAGE_TYPE,
+  GAME_STAGES,
   GAME_STATUS,
   OPTIONAL_PLAYER_TYPE,
   PLAYER_TYPE,
@@ -33,8 +35,22 @@ export const resetGame = () => {
 };
 
 export const useGame = (): { data: IGame | null; loading: boolean } => {
-  console.log(useData(DB_PATH.GAME));
-  return useData(DB_PATH.GAME);
+  const { data, loading } = useData<IGame>(DB_PATH.GAME);
+
+  const stage =
+    data?.stageIndex != null ? GAME_STAGES[data.stageIndex] : undefined;
+
+  const enrichedGame =
+    data && stage
+      ? {
+          ...data,
+          round: stage.round,
+          damage: stage.type === GAME_STAGE_TYPE.COMBAT ? stage.damage : 0,
+        }
+      : data;
+
+  return { data: enrichedGame, loading };
+  // return useData(DB_PATH.GAME);
 };
 
 export const useStartGame = () => {
@@ -56,9 +72,7 @@ export const useStartGame = () => {
       stageIndex: 0,
       round: 0,
       maxElementCount,
-      currentStage: {
-        damage: 3,
-      },
+      damage: 5,
     });
   };
 };
@@ -109,7 +123,7 @@ const shuffle = (array: any[]) => {
   let currentIndex = array.length;
 
   // While there remain elements to shuffle...
-  while (currentIndex != 0) {
+  while (currentIndex !== 0) {
     // Pick a remaining element...
     let randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
