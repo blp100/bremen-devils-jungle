@@ -1,7 +1,6 @@
 import {
   CORE_PLAYER_TYPES,
   DB_PATH,
-  GAME_STAGE_TYPE,
   GAME_STAGES,
   GAME_STATUS,
   OPTIONAL_PLAYER_TYPE,
@@ -44,8 +43,7 @@ export const useGame = (): { data: IGame | null; loading: boolean } => {
     data && stage
       ? {
           ...data,
-          round: stage.round,
-          damage: stage.type === GAME_STAGE_TYPE.COMBAT ? stage.damage : 0,
+          ...stage,
         }
       : data;
 
@@ -70,9 +68,7 @@ export const useStartGame = () => {
     updateData(DB_PATH.GAME, {
       status: GAME_STATUS.IN_PROGRESS,
       stageIndex: 0,
-      round: 0,
       maxElementCount,
-      damage: 5,
     });
   };
 };
