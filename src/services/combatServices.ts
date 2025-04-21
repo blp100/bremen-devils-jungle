@@ -8,7 +8,8 @@ import { IPlayer, IGame } from "@/interfaces";
  *
  * @param attacker
  * @param target
- * @param maxElementCount
+ * @param players
+ * @param game
  */
 export const handlePlayerAttack = async (
   attacker: IPlayer,
