@@ -36,8 +36,8 @@ export const resetGame = () => {
 export const useGame = (): { data: IGame | null; loading: boolean } => {
   const { data, loading } = useData<IGame>(DB_PATH.GAME);
 
-  const stage =
-    data?.stageIndex != null ? GAME_STAGES[data.stageIndex] : undefined;
+  const index = data?.stageIndex ?? -1;
+  const stage = GAME_STAGES[index];
 
   const enrichedGame =
     data && stage
