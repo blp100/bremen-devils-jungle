@@ -12,6 +12,7 @@ import { GAME_STATUS, PLAYER_COUNT } from "../constants";
 import AttackPanel from "@/components/AttackPanel";
 import { Button } from "@/components/ui/button";
 import { AdminCombatSelector } from "@/components/AdminCombatSelector";
+import { AdminStageController } from "@/components/AdminStageController";
 import { handlePlayerAttack } from "@/services/combatServices";
 
 const Admin = () => {
@@ -62,6 +63,7 @@ const Admin = () => {
           }}
         />
       )}
+      <AdminStageController />
     </div>
   );
 };
