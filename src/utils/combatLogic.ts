@@ -85,7 +85,7 @@ const resolveDirectCombat = (
   );
   const evolutionValid = _canAttackBasedOnEvolutionCards(attacker, target);
 
-  const success = elementValid || evolutionValid;
+  const success = (elementValid || evolutionValid) && !updatedTarget.protected;
 
   if (success) {
     updatedAttacker.hp += damage;
