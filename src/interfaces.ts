@@ -10,6 +10,7 @@ export interface IPlayer {
   elementCount: number;
   hp: number;
   protected: boolean;
+  isResting: boolean;
   attackCards: { [playerNumber: number]: number };
   evolutionCards: string[];
   minionId?: string; // for LION_KING

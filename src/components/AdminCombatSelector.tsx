@@ -17,10 +17,23 @@ export const AdminCombatSelector = ({
   const [attacker, setAttacker] = useState<IPlayer | null>(null);
   const [target, setTarget] = useState<IPlayer | null>(null);
 
+  const canBeAttacker = (player: IPlayer) => !player.isResting;
+  const canBeTarget = (player: IPlayer) => !player.protected;
+  const isDisabled = (player: IPlayer) => {
+    if (!attacker) return !canBeAttacker(player);
+    if (!target && player.id !== attacker.id) return !canBeTarget(player);
+    return false;
+  };
+
   const handleSelectPlayer = (player: IPlayer) => {
-    if (!attacker) {
+    if (!attacker && canBeAttacker(player)) {
       setAttacker(player);
-    } else if (!target && player.id !== attacker.id) {
+    } else if (
+      attacker &&
+      !target &&
+      player.id !== attacker.id &&
+      canBeTarget(player)
+    ) {
       setTarget(player);
     }
   };
@@ -48,15 +61,29 @@ export const AdminCombatSelector = ({
           <Button
             key={player.id}
             onClick={() => handleSelectPlayer(player)}
+            disabled={isDisabled(player)}
             variant="outline"
             className={clsx(
               "flex flex-col items-center justify-center py-6",
+              isDisabled(player) && "opacity-50 cursor-not-allowed",
               attacker?.id === player.id && "ring-2 ring-blue-500",
               target?.id === player.id && "ring-2 ring-red-500",
               isSelected(player) && "font-bold",
             )}
           >
-            {player.number} {player.nickname}
+            <div>
+              {player.number} {player.nickname}
+              {player.isResting && (
+                <span className="text-xs text-muted-foreground mt-1">
+                  休息中
+                </span>
+              )}
+              {player.protected && (
+                <span className="text-xs text-muted-foreground mt-1">
+                  保護區
+                </span>
+              )}
+            </div>
           </Button>
         ))}
       </div>
