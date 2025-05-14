@@ -46,6 +46,7 @@ const PlayerHpEditor = ({
   const updateHp = async () => {
     await updateData(`players/${player.id}`, { hp });
     toast.success(`${player.nickname} 的 HP 已更新為 ${hp}`);
+    onBack();
   };
 
   return (
