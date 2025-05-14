@@ -125,7 +125,7 @@ const resolveDirectCombat = (
     success,
     attacker: updatedAttacker,
     target: updatedTarget,
-    damageDealt: success ? damage : 0,
+    damageDealt: damage,
     reason: success ? "Attack succeeded" : "Attack failed",
   };
 };
