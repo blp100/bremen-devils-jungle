@@ -11,10 +11,9 @@ import { useData } from "../services/firebaseHelpers";
 import { GAME_STATUS, PLAYER_COUNT } from "../constants";
 import AttackPanel from "@/components/AttackPanel";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { AdminCombatSelector } from "@/components/AdminCombatSelector";
 import { AdminStageController } from "@/components/AdminStageController";
-import { handlePlayerAttack } from "@/services/combatServices";
+import { AdminHpController } from "@/components/AdminHpController";
 
 const Admin = () => {
   const { data } = useData();
@@ -57,26 +56,14 @@ const Admin = () => {
       <Button onClick={resetGame}>Reset</Button>
       <AttackPanel game={game} players={players} />
       {players && game && (
-        <AdminCombatSelector
-          players={Object.values(players)}
-          onAttack={async (attacker, target) => {
-            const result = await handlePlayerAttack(
-              attacker,
-              target,
-              players,
-              game,
-            );
-            if (result.success) {
-              toast.success(
-                `${attacker.nickname} 攻擊成功，對 ${target.nickname} 造成 ${result.damageDealt} 傷害`,
-              );
-            } else {
-              toast.error(
-                `${attacker.nickname} 攻擊失敗，損失 ${result.damageDealt} 血量，${target.nickname} 回復同等血量`,
-              );
-            }
-          }}
-        />
+        <>
+          <AdminCombatSelector
+            players={Object.values(players)}
+            game={game}
+            allPlayers={players}
+          />
+          <AdminHpController players={players} />
+        </>
       )}
       <AdminStageController />
     </div>

@@ -1,18 +1,21 @@
-"use client";
-
 import { useState } from "react";
 import { IPlayer } from "@/interfaces";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
+import { toast } from "sonner";
+import { handlePlayerAttack } from "@/services/combatServices";
+import { IGame } from "@/interfaces";
 
 interface AdminCombatSelectorProps {
   players: IPlayer[];
-  onAttack: (attacker: IPlayer, target: IPlayer) => void;
+  game: IGame;
+  allPlayers: { [key: string]: IPlayer };
 }
 
 export const AdminCombatSelector = ({
   players,
-  onAttack,
+  game,
+  allPlayers,
 }: AdminCombatSelectorProps) => {
   const [attacker, setAttacker] = useState<IPlayer | null>(null);
   const [target, setTarget] = useState<IPlayer | null>(null);
@@ -43,9 +46,25 @@ export const AdminCombatSelector = ({
     setTarget(null);
   };
 
-  const handleAttack = () => {
+  const handleAttack = async () => {
     if (attacker && target) {
-      onAttack(attacker, target);
+      const result = await handlePlayerAttack(
+        attacker,
+        target,
+        allPlayers,
+        game,
+      );
+
+      if (result.success) {
+        toast.success(
+          `${attacker.nickname} 攻擊成功，對 ${target.nickname} 造成 ${result.damageDealt} 傷害`,
+        );
+      } else {
+        toast.error(
+          `${attacker.nickname} 攻擊失敗，損失 ${result.damageDealt} 血量，${target.nickname} 回復同等血量`,
+        );
+      }
+
       handleReset();
     }
   };
