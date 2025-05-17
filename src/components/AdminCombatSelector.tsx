@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { toast } from "sonner";
 import { handlePlayerAttack } from "@/services/combatServices";
 import { IGame } from "@/interfaces";
+import { GAME_STAGE_TYPE, GAME_STAGES } from "@/constants";
 
 interface AdminCombatSelectorProps {
   players: IPlayer[];
@@ -27,6 +28,10 @@ export const AdminCombatSelector = ({
     if (!target && player.id !== attacker.id) return !canBeTarget(player);
     return false;
   };
+  const isCombatStage =
+    GAME_STAGES[game.stageIndex]?.type === GAME_STAGE_TYPE.COMBAT;
+
+  console.log(isCombatStage);
 
   const handleSelectPlayer = (player: IPlayer) => {
     if (!attacker && canBeAttacker(player)) {
@@ -121,7 +126,10 @@ export const AdminCombatSelector = ({
       </div>
 
       <div className="flex justify-center gap-2">
-        <Button onClick={handleAttack} disabled={!attacker || !target}>
+        <Button
+          onClick={handleAttack}
+          disabled={!attacker || !target || !isCombatStage}
+        >
           ⚔️ 執行攻擊
         </Button>
         <Button variant="ghost" onClick={handleReset}>
