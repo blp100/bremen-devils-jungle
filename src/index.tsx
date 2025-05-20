@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Join from "./pages/Join";
 import NotFound from "./pages/NotFound";
 import Player from "./pages/Player";
+import { Toaster } from "@/components/ui/sonner";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -18,6 +19,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="player/:playerId" element={<Player />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Toaster />
     </BrowserRouter>
   </StrictMode>,
 );

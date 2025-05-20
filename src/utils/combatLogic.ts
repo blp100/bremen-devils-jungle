@@ -1,6 +1,23 @@
 import { IPlayer, IGame } from "@/interfaces";
 import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
 
+const applyParasiticEffect = (
+  attacker: IPlayer,
+  damageDealt: number,
+  allPlayers: { [key: string]: IPlayer },
+) => {
+  for (const playerId in allPlayers) {
+    const player = allPlayers[playerId];
+    if (
+      player.evolutionCards?.includes(EVOLUTION_TRAITS.PARASITIC) &&
+      player.id !== attacker.id &&
+      player.parasiticTargetId === attacker.id
+    ) {
+      player.hp += damageDealt;
+    }
+  }
+};
+
 export const processCombatPhase = (
   attacker: IPlayer,
   target: IPlayer,
@@ -34,16 +51,9 @@ export const processCombatPhase = (
   if (result.success) {
     for (const playerId in allPlayers) {
       const player = allPlayers[playerId];
-      // PARASITIC
-      if (
-        player.evolutionCards?.includes(EVOLUTION_TRAITS.PARASITIC) &&
-        player.id !== attacker.id &&
-        player.parasiticTargetId === attacker.id
-      ) {
-        player.hp += result.damageDealt;
-      }
 
       // LION_KING: trigger minion follow-up attack
+      // TODO: it might be have some logic problem with attack, if the minion attack successed, the damage is 7, the minion would get 4 hp, the lion king would add 3 hp, and the parastic owner would get 4 hp which he's target is minion
       if (
         attacker.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING) &&
         attacker.minionId === player.id &&
@@ -56,9 +66,15 @@ export const processCombatPhase = (
           game.damage,
         );
         result.damageDealt += minionResult.damageDealt;
+        if (minionResult.success) {
+          attacker.hp += 3;
+          player.hp = Math.max(0, player.hp - 3);
+        }
         result.target = minionResult.target; // Update target state after minion attack
+        applyParasiticEffect(player, minionResult.damageDealt - 3, allPlayers);
       }
     }
+    applyParasiticEffect(attacker, result.damageDealt, allPlayers);
   }
 
   return {
@@ -85,21 +101,31 @@ const resolveDirectCombat = (
   );
   const evolutionValid = _canAttackBasedOnEvolutionCards(attacker, target);
 
-  const success = elementValid || evolutionValid;
+  const success = (elementValid || evolutionValid) && !updatedTarget.protected;
 
   if (success) {
     updatedAttacker.hp += damage;
+    updatedAttacker.isResting = true;
+
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
     updatedTarget.protected = true;
 
-    applyAfterCombatEffects(updatedAttacker, updatedTarget);
+    applyAfterCombatEffects(updatedAttacker, updatedTarget, success);
+  } else {
+    updatedAttacker.hp = Math.max(0, updatedAttacker.hp - damage);
+    updatedAttacker.isResting = true;
+    updatedAttacker.protected = true;
+
+    updatedTarget.hp += damage;
+
+    applyAfterCombatEffects(updatedAttacker, updatedTarget, success);
   }
 
   return {
     success,
     attacker: updatedAttacker,
     target: updatedTarget,
-    damageDealt: success ? damage : 0,
+    damageDealt: damage,
     reason: success ? "Attack succeeded" : "Attack failed",
   };
 };
@@ -171,14 +197,20 @@ const applyPreOutcomeEffects = (
 const applyAfterCombatEffects = (
   updatedAttacker: IPlayer,
   updatedTarget: IPlayer,
+  success: boolean,
 ) => {
   // BLOODTHIRSTY: attacker gains HP, target takes more damage
   if (
     updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY) ||
     updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY)
   ) {
-    updatedAttacker.hp += 2;
-    updatedTarget.hp = Math.max(0, updatedTarget.hp - 2);
+    if (success) {
+      updatedAttacker.hp += 2;
+      updatedTarget.hp = Math.max(0, updatedTarget.hp - 2);
+    } else {
+      updatedTarget.hp += 2;
+      updatedAttacker.hp = Math.max(0, updatedTarget.hp - 2);
+    }
   }
 
   // DEADLY_POISON: if target dies, attacker also dies

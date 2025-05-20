@@ -19,9 +19,7 @@ export const handlePlayerAttack = async (
 ) => {
   const result = processCombatPhase(attacker, target, players, game);
 
-  if (result.success) {
-    await updatePlayerStatusAfterAttack(result.attacker, result.target);
-  }
+  await updatePlayerStatusAfterAttack(result.attacker, result.target);
 
   return result;
 };

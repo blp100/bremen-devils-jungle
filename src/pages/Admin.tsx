@@ -11,6 +11,9 @@ import { useData } from "../services/firebaseHelpers";
 import { GAME_STATUS, PLAYER_COUNT } from "../constants";
 import AttackPanel from "@/components/AttackPanel";
 import { Button } from "@/components/ui/button";
+import { AdminCombatSelector } from "@/components/AdminCombatSelector";
+import { AdminStageController } from "@/components/AdminStageController";
+import { AdminHpController } from "@/components/AdminHpController";
 
 const Admin = () => {
   const { data } = useData();
@@ -52,6 +55,17 @@ const Admin = () => {
       )}
       <Button onClick={resetGame}>Reset</Button>
       <AttackPanel game={game} players={players} />
+      {players && game && (
+        <>
+          <AdminCombatSelector
+            players={Object.values(players)}
+            game={game}
+            allPlayers={players}
+          />
+          <AdminHpController players={players} />
+        </>
+      )}
+      <AdminStageController />
     </div>
   );
 };
