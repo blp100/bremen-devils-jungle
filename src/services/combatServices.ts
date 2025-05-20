@@ -33,5 +33,22 @@ export const handlePlayerAttack = async (
 
   const logKey = `combat-${Date.now()}`;
   await updateData(`${DB_PATH.COMBAT_LOGS}/${logKey}`, logEntry);
+
+  if (result.traitsTriggered && result.traitsTriggered.length > 0) {
+    for (const effect of result.traitsTriggered) {
+      const traitLogEntry = {
+        timestamp: new Date().toISOString(),
+        type: "trait-effect",
+        trait: effect.trait,
+        sourceId: effect.sourceId,
+        targetId: effect.targetId,
+        damage: effect.damage,
+        note: effect.note,
+      };
+      const traitLogKey = `trait-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      await updateData(`${DB_PATH.COMBAT_LOGS}/${traitLogKey}`, traitLogEntry);
+    }
+  }
+
   return result;
 };

@@ -1,4 +1,4 @@
-import { IPlayer, IGame } from "@/interfaces";
+import { IPlayer, IGame, ITraitEffectLog } from "@/interfaces";
 import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
 
 const applyParasiticEffect = (
@@ -23,7 +23,15 @@ export const processCombatPhase = (
   target: IPlayer,
   allPlayers: { [key: string]: IPlayer },
   game: IGame,
-) => {
+): {
+  success: boolean;
+  reason: string;
+  attacker: IPlayer;
+  target: IPlayer;
+  damageDealt: number;
+  players: { [key: string]: IPlayer };
+  traitsTriggered: ITraitEffectLog[];
+} => {
   // Prevent attacking your own minion if you are LION_KING
   if (
     attacker.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING) &&
@@ -36,6 +44,7 @@ export const processCombatPhase = (
       target,
       damageDealt: 0,
       players: allPlayers,
+      traitsTriggered: [],
     };
   }
 
@@ -92,6 +101,8 @@ const resolveDirectCombat = (
   const updatedAttacker = { ...attacker };
   const updatedTarget = { ...target };
 
+  const traitsTriggered: ITraitEffectLog[] = [];
+
   applyPreOutcomeEffects(updatedAttacker, updatedTarget);
 
   const elementValid = _canAttackBasedOnElement(
@@ -110,7 +121,12 @@ const resolveDirectCombat = (
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
     updatedTarget.protected = true;
 
-    applyAfterCombatEffects(updatedAttacker, updatedTarget, success);
+    applyAfterCombatEffects(
+      updatedAttacker,
+      updatedTarget,
+      success,
+      traitsTriggered,
+    );
   } else {
     updatedAttacker.hp = Math.max(0, updatedAttacker.hp - damage);
     updatedAttacker.isResting = true;
@@ -118,7 +134,12 @@ const resolveDirectCombat = (
 
     updatedTarget.hp += damage;
 
-    applyAfterCombatEffects(updatedAttacker, updatedTarget, success);
+    applyAfterCombatEffects(
+      updatedAttacker,
+      updatedTarget,
+      success,
+      traitsTriggered,
+    );
   }
 
   return {
@@ -127,6 +148,7 @@ const resolveDirectCombat = (
     target: updatedTarget,
     damageDealt: damage,
     reason: success ? "Attack succeeded" : "Attack failed",
+    traitsTriggered,
   };
 };
 
@@ -198,19 +220,37 @@ const applyAfterCombatEffects = (
   updatedAttacker: IPlayer,
   updatedTarget: IPlayer,
   success: boolean,
+  traitsTriggered: ITraitEffectLog[],
 ) => {
   // BLOODTHIRSTY: attacker gains HP, target takes more damage
   if (
     updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY) ||
     updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY)
   ) {
-    if (success) {
-      updatedAttacker.hp += 2;
-      updatedTarget.hp = Math.max(0, updatedTarget.hp - 2);
-    } else {
-      updatedTarget.hp += 2;
-      updatedAttacker.hp = Math.max(0, updatedTarget.hp - 2);
-    }
+    const victor = success ? updatedAttacker : updatedTarget;
+    const loser = success ? updatedTarget : updatedAttacker;
+
+    victor.hp += 2;
+    loser.hp = Math.max(0, loser.hp - 2);
+
+    traitsTriggered.push(
+      {
+        trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
+        sourceId: victor.id,
+        targetId: victor.id,
+        damage: -2,
+        note: `BLOODTHIRSTY: healed victor ${victor.nickname}`,
+      },
+      {
+        trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
+        sourceId: victor.id,
+        targetId: loser.id,
+        damage: 2,
+        note: `BLOODTHIRSTY: dealt extra damage to loser ${loser.nickname}`,
+      },
+    );
+
+    console.log(updatedAttacker.hp, updatedTarget.hp);
   }
 
   // DEADLY_POISON: if target dies, attacker also dies
