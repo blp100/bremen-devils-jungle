@@ -1,4 +1,9 @@
-import { GAME_STAGE_TYPE, PLAYER_TYPE, GAME_STATUS } from "./constants";
+import {
+  GAME_STAGE_TYPE,
+  PLAYER_TYPE,
+  GAME_STATUS,
+  EVOLUTION_TRAITS,
+} from "./constants";
 
 export type IGameStage = IDiscussionStage | ICombatStage | IEvolutionStage;
 
@@ -42,4 +47,12 @@ interface ICombatStage extends IBaseGameStage {
 
 interface IEvolutionStage extends IBaseGameStage {
   type: GAME_STAGE_TYPE.EVOLUTION;
+}
+
+export interface ITraitEffectLog {
+  trait: EVOLUTION_TRAITS;
+  sourceId: string;
+  targetId: string;
+  damage: number;
+  note?: string;
 }
