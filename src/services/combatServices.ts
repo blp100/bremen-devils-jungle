@@ -1,5 +1,7 @@
 import { processCombatPhase } from "@/utils/combatLogic";
 import { updatePlayerStatusAfterAttack } from "@/services/updateData";
+import { updateData } from "@/services/firebaseHelpers";
+import { DB_PATH } from "@/constants";
 import { IPlayer, IGame } from "@/interfaces";
 
 /**
@@ -21,5 +23,15 @@ export const handlePlayerAttack = async (
 
   await updatePlayerStatusAfterAttack(result.attacker, result.target);
 
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    attackerId: attacker.id,
+    targetId: target.id,
+    success: result.success,
+    damage: result.damageDealt,
+  };
+
+  const logKey = `combat-${Date.now()}`;
+  await updateData(`${DB_PATH.COMBAT_LOGS}/${logKey}`, logEntry);
   return result;
 };
