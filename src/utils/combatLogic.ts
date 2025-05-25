@@ -249,8 +249,6 @@ const applyAfterCombatEffects = (
         note: `BLOODTHIRSTY: dealt extra damage to loser ${loser.nickname}`,
       },
     );
-
-    console.log(updatedAttacker.hp, updatedTarget.hp);
   }
 
   // DEADLY_POISON: if target dies, attacker also dies
@@ -259,6 +257,14 @@ const applyAfterCombatEffects = (
     updatedTarget.hp === 0
   ) {
     updatedAttacker.hp = 0;
+
+    traitsTriggered.push({
+      trait: EVOLUTION_TRAITS.DEADLY_POISON,
+      sourceId: updatedTarget.id,
+      targetId: updatedAttacker.id,
+      damage: updatedAttacker.hp,
+      note: `DEADLY_POISON: ${updatedTarget.nickname}'s trait killed ${updatedAttacker.nickname}`,
+    });
   }
 
   // HIBERNATION: attacker becomes protected after successful attack
