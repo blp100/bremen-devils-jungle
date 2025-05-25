@@ -1,12 +1,38 @@
 import { IPlayer, IGame, ITraitEffectLog } from "@/interfaces";
 import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
 
-const applyParasiticEffect = (
+const applyPostCombatTraitEffects = (
   attacker: IPlayer,
   damageDealt: number,
   allPlayers: { [key: string]: IPlayer },
   traitsTriggered: ITraitEffectLog[],
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
 ) => {
+  // Scavenger
+  const someoneDied = updatedAttacker.hp === 0 || updatedTarget.hp === 0;
+
+  for (const playerId in allPlayers) {
+    const player = allPlayers[playerId];
+    if (
+      player.evolutionCards?.includes(EVOLUTION_TRAITS.SCAVENGER) &&
+      player.hp > 0 &&
+      someoneDied
+    ) {
+      player.hp += 4;
+
+      traitsTriggered.push({
+        trait: EVOLUTION_TRAITS.SCAVENGER,
+        sourceId: player.id,
+        targetId:
+          updatedAttacker.hp === 0 ? updatedAttacker.id : updatedTarget.id,
+        damage: -4,
+        note: `SCAVENGER: ${player.nickname} scavenged 4 HP from the death of ${updatedAttacker.hp === 0 ? updatedAttacker.nickname : updatedTarget.nickname}`,
+      });
+    }
+  }
+
+  // Parasatic
   for (const playerId in allPlayers) {
     const player = allPlayers[playerId];
     if (
@@ -89,21 +115,26 @@ export const processCombatPhase = (
           player.hp = Math.max(0, player.hp - 3);
         }
         result.target = minionResult.target; // Update target state after minion attack
-        applyParasiticEffect(
+        applyPostCombatTraitEffects(
           player,
           minionResult.damageDealt - 3,
           allPlayers,
           result.traitsTriggered,
+          minionResult.attacker,
+          minionResult.target,
         );
       }
     }
-    applyParasiticEffect(
-      attacker,
-      result.damageDealt,
-      allPlayers,
-      result.traitsTriggered,
-    );
   }
+
+  applyPostCombatTraitEffects(
+    attacker,
+    result.damageDealt,
+    allPlayers,
+    result.traitsTriggered,
+    result.attacker,
+    result.target,
+  );
 
   // update attacker and target infomation
   allPlayers[result.attacker.id] = {
@@ -301,6 +332,4 @@ const applyAfterCombatEffects = (
   if (updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.HIBERNATION)) {
     updatedAttacker.protected = true;
   }
-
-  // Future traits can go here...
 };
