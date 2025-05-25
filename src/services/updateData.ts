@@ -6,14 +6,10 @@ import { IPlayer } from "@/interfaces";
  * @param attacker
  * @param target
  */
-export const updatePlayerStatusAfterAttack = async (
-  attacker: IPlayer,
-  target: IPlayer,
-) => {
-  await updateData("players", {
-    [attacker.id]: attacker,
-    [target.id]: target,
-  });
+export const updatePlayerStatusAfterAttack = async (players: {
+  [key: string]: IPlayer;
+}) => {
+  await updateData("players", players);
 };
 
 /**

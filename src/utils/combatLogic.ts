@@ -5,6 +5,7 @@ const applyParasiticEffect = (
   attacker: IPlayer,
   damageDealt: number,
   allPlayers: { [key: string]: IPlayer },
+  traitsTriggered: ITraitEffectLog[],
 ) => {
   for (const playerId in allPlayers) {
     const player = allPlayers[playerId];
@@ -14,6 +15,14 @@ const applyParasiticEffect = (
       player.parasiticTargetId === attacker.id
     ) {
       player.hp += damageDealt;
+
+      traitsTriggered.push({
+        trait: EVOLUTION_TRAITS.PARASITIC,
+        sourceId: player.id,
+        targetId: attacker.id,
+        damage: -damageDealt,
+        note: `PARASITIC: ${player.nickname} leeched ${damageDealt} HP from ${attacker.nickname}`,
+      });
     }
   }
 };
@@ -80,11 +89,32 @@ export const processCombatPhase = (
           player.hp = Math.max(0, player.hp - 3);
         }
         result.target = minionResult.target; // Update target state after minion attack
-        applyParasiticEffect(player, minionResult.damageDealt - 3, allPlayers);
+        applyParasiticEffect(
+          player,
+          minionResult.damageDealt - 3,
+          allPlayers,
+          result.traitsTriggered,
+        );
       }
     }
-    applyParasiticEffect(attacker, result.damageDealt, allPlayers);
+    applyParasiticEffect(
+      attacker,
+      result.damageDealt,
+      allPlayers,
+      result.traitsTriggered,
+    );
   }
+
+  // update attacker and target infomation
+  allPlayers[result.attacker.id] = {
+    ...allPlayers[result.attacker.id],
+    ...result.attacker,
+  };
+
+  allPlayers[result.target.id] = {
+    ...allPlayers[result.target.id],
+    ...result.target,
+  };
 
   return {
     ...result,

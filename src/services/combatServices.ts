@@ -21,7 +21,9 @@ export const handlePlayerAttack = async (
 ) => {
   const result = processCombatPhase(attacker, target, players, game);
 
-  await updatePlayerStatusAfterAttack(result.attacker, result.target);
+  console.log(players);
+
+  await updatePlayerStatusAfterAttack(players);
 
   const logEntry = {
     timestamp: new Date().toISOString(),
