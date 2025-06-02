@@ -31,8 +31,6 @@ export const AdminCombatSelector = ({
   const isCombatStage =
     GAME_STAGES[game.stageIndex]?.type === GAME_STAGE_TYPE.COMBAT;
 
-  console.log(isCombatStage);
-
   const handleSelectPlayer = (player: IPlayer) => {
     if (!attacker && canBeAttacker(player)) {
       setAttacker(player);

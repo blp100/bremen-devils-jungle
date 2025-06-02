@@ -17,7 +17,6 @@ export default function AttackPanel({ players, game }: GameProps) {
       players,
       game,
     );
-    console.log(result.reason);
   };
 
   return (

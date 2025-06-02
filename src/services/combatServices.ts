@@ -1,5 +1,7 @@
 import { processCombatPhase } from "@/utils/combatLogic";
 import { updatePlayerStatusAfterAttack } from "@/services/updateData";
+import { updateData } from "@/services/firebaseHelpers";
+import { DB_PATH } from "@/constants";
 import { IPlayer, IGame } from "@/interfaces";
 
 /**
@@ -19,7 +21,34 @@ export const handlePlayerAttack = async (
 ) => {
   const result = processCombatPhase(attacker, target, players, game);
 
-  await updatePlayerStatusAfterAttack(result.attacker, result.target);
+  await updatePlayerStatusAfterAttack(players);
+
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    attackerId: attacker.id,
+    targetId: target.id,
+    success: result.success,
+    damage: result.damageDealt,
+  };
+
+  const logKey = `combat-${Date.now()}`;
+  await updateData(`${DB_PATH.COMBAT_LOGS}/${logKey}`, logEntry);
+
+  if (result.traitsTriggered && result.traitsTriggered.length > 0) {
+    for (const effect of result.traitsTriggered) {
+      const traitLogEntry = {
+        timestamp: new Date().toISOString(),
+        type: "trait-effect",
+        trait: effect.trait,
+        sourceId: effect.sourceId,
+        targetId: effect.targetId,
+        damage: effect.damage,
+        note: effect.note,
+      };
+      const traitLogKey = `trait-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      await updateData(`${DB_PATH.COMBAT_LOGS}/${traitLogKey}`, traitLogEntry);
+    }
+  }
 
   return result;
 };
