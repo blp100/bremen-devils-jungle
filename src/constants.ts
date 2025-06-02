@@ -43,7 +43,7 @@ export enum EVOLUTION_TRAITS {
 
   // Second Round Evolution
   AMPHIBIOUS = "Amphibious", // During the attack phase, if the owner and the target are the same element, the owner wins the combat.
-  PARASITIC = "Parasitic", // During the attack phase, the owner gains HP when the target successfully attacks.
+  PARASITIC = "Parasitic", // During the attack phase, if the host gains HP, the parasite also gains the same amount of HP.
   FOREST_SCEPTER = "Forest Scepter", // During the attack phase, the owner can determine who goes first when an attack begins.
   TAIL_REGROWTH = "Tail Regrowth", // During the attack phase, the owner can discard 2 attack cards to preserve HP; the attacker still gains the HP bonus if the attack succeeds.
   SPECIES_EXTINCTION = "Species Extinction", // During the discussion phase, the owner can remove 5 HP from all players of a specific number of element. (Only once per game.)
