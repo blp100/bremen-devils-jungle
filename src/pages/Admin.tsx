@@ -43,48 +43,51 @@ const Admin = () => {
       {/* Header - Fixed on mobile */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container mx-auto px-4 py-3 max-w-5xl">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          {/* Title and Menu Row */}
+          <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
               管理員控制台
             </h1>
-            <div className="flex items-center gap-2">
-              <div className="flex flex-wrap gap-2 flex-1">
-                {(!game || game?.status === GAME_STATUS.ENDED) && (
-                  <Button
-                    onClick={createGame}
-                    size="sm"
-                    className="flex-1 sm:flex-none min-h-[44px]"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    <span className="text-sm">創建新遊戲</span>
-                  </Button>
-                )}
-                {game?.status === GAME_STATUS.JOINING && (
-                  <>
-                    <Button
-                      disabled={!hasEnoughPlayers}
-                      onClick={startGame}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none min-h-[44px]"
-                    >
-                      <Play className="h-4 w-4 mr-1" />
-                      <span className="text-sm">開始遊戲</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={hasReachedMaxPlayers}
-                      onClick={() => createDummyPlayers(1, playerCount)}
-                      className="flex-1 sm:flex-none min-h-[44px]"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      <span className="text-sm">測試玩家</span>
-                    </Button>
-                  </>
-                )}
-              </div>
+            <div className="ml-auto">
               <AdminMenu />
             </div>
+          </div>
+
+          {/* Action Buttons Row */}
+          <div className="flex flex-wrap gap-2">
+            {(!game || game?.status === GAME_STATUS.ENDED) && (
+              <Button
+                onClick={createGame}
+                size="sm"
+                className="flex-1 sm:flex-none min-h-[44px]"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                <span className="text-sm">創建新遊戲</span>
+              </Button>
+            )}
+            {game?.status === GAME_STATUS.JOINING && (
+              <>
+                <Button
+                  disabled={!hasEnoughPlayers}
+                  onClick={startGame}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none min-h-[44px]"
+                >
+                  <Play className="h-4 w-4 mr-1" />
+                  <span className="text-sm">開始遊戲</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={hasReachedMaxPlayers}
+                  onClick={() => createDummyPlayers(1, playerCount)}
+                  className="flex-1 sm:flex-none min-h-[44px]"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  <span className="text-sm">測試玩家</span>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
