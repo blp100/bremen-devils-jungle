@@ -2,7 +2,14 @@ import { Button } from "@/components/ui/button";
 import { DB_PATH, GAME_STAGES } from "@/constants";
 import { useGame } from "@/utils";
 import { updateData } from "@/services/firebaseHelpers";
-import { ChevronRight, RotateCcw, Clock, Swords, Zap } from "lucide-react";
+import {
+  ChevronRight,
+  RotateCcw,
+  Clock,
+  Swords,
+  Zap,
+  ChevronLeft,
+} from "lucide-react";
 
 export const AdminStageController = () => {
   const { data: game } = useGame();
@@ -131,7 +138,7 @@ export const AdminStageController = () => {
           className="min-h-[48px] text-base"
           size="lg"
         >
-          <ChevronRight className="h-5 w-5 mr-2" />
+          <ChevronLeft className="h-5 w-5 mr-2" />
           {isFirstStage ? "遊戲剛開始" : "回到上一階段"}
         </Button>
 
