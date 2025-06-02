@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import type { IPlayer } from "@/interfaces"
 import { Button } from "@/components/ui/button"

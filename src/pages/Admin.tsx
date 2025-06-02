@@ -1,27 +1,42 @@
-import { useState } from "react"
-import { createDummyPlayers, createGame, resetGame, useGame, usePlayers, useStartGame } from "../utils"
-import { GAME_STATUS, PLAYER_COUNT } from "../constants"
-import { Button } from "@/components/ui/button"
-import { AdminCombatSelector } from "@/components/AdminCombatSelector"
-import { AdminStageController } from "@/components/AdminStageController"
-import { AdminHpController } from "@/components/AdminHpController"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AdminLogViewer } from "@/components/AdminLogViewer"
-import { Separator } from "@/components/ui/separator"
-import { AlertCircle, Activity, Heart, Clock, FileText, Plus, Play, RotateCcw } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useState } from "react";
+import {
+  createDummyPlayers,
+  createGame,
+  useGame,
+  usePlayers,
+  useStartGame,
+} from "../utils";
+import { GAME_STATUS, PLAYER_COUNT } from "../constants";
+import { Button } from "@/components/ui/button";
+import { AdminCombatSelector } from "@/components/AdminCombatSelector";
+import { AdminStageController } from "@/components/AdminStageController";
+import { AdminHpController } from "@/components/AdminHpController";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminLogViewer } from "@/components/AdminLogViewer";
+import { AdminMenu } from "@/components/AdminMenu";
+import { Separator } from "@/components/ui/separator";
+import {
+  AlertCircle,
+  Activity,
+  Heart,
+  Clock,
+  FileText,
+  Plus,
+  Play,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState("combat")
-  const { data: game, loading: gameLoading } = useGame()
-  const { data: players, loading: playersLoading } = usePlayers()
-  const startGame = useStartGame()
+  const [activeTab, setActiveTab] = useState("combat");
+  const { data: game, loading: gameLoading } = useGame();
+  const { data: players, loading: playersLoading } = usePlayers();
+  const startGame = useStartGame();
 
-  const playerCount = Object.values(players || {}).length
-  const hasEnoughPlayers = playerCount >= PLAYER_COUNT.MIN
-  const hasReachedMaxPlayers = playerCount >= PLAYER_COUNT.MAX
-  const isGameInProgress = game?.status === GAME_STATUS.IN_PROGRESS
+  const playerCount = Object.values(players || {}).length;
+  const hasEnoughPlayers = playerCount >= PLAYER_COUNT.MIN;
+  const hasReachedMaxPlayers = playerCount >= PLAYER_COUNT.MAX;
+  const isGameInProgress = game?.status === GAME_STATUS.IN_PROGRESS;
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,41 +44,46 @@ const Admin = () => {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container mx-auto px-4 py-3 max-w-5xl">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">管理員控制台</h1>
-            <div className="flex flex-wrap gap-2">
-              {(!game || game?.status === GAME_STATUS.ENDED) && (
-                <Button onClick={createGame} size="sm" className="flex-1 sm:flex-none min-h-[44px]">
-                  <Plus className="h-4 w-4 mr-1" />
-                  <span className="text-sm">創建新遊戲</span>
-                </Button>
-              )}
-              {game?.status === GAME_STATUS.JOINING && (
-                <>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
+              管理員控制台
+            </h1>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-wrap gap-2 flex-1">
+                {(!game || game?.status === GAME_STATUS.ENDED) && (
                   <Button
-                    disabled={!hasEnoughPlayers}
-                    onClick={startGame}
+                    onClick={createGame}
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none min-h-[44px]"
-                  >
-                    <Play className="h-4 w-4 mr-1" />
-                    <span className="text-sm">開始遊戲</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={hasReachedMaxPlayers}
-                    onClick={() => createDummyPlayers(1, playerCount)}
                     className="flex-1 sm:flex-none min-h-[44px]"
                   >
                     <Plus className="h-4 w-4 mr-1" />
-                    <span className="text-sm">測試玩家</span>
+                    <span className="text-sm">創建新遊戲</span>
                   </Button>
-                </>
-              )}
-              <Button variant="destructive" onClick={resetGame} size="sm" className="flex-1 sm:flex-none min-h-[44px]">
-                <RotateCcw className="h-4 w-4 mr-1" />
-                <span className="text-sm">重置</span>
-              </Button>
+                )}
+                {game?.status === GAME_STATUS.JOINING && (
+                  <>
+                    <Button
+                      disabled={!hasEnoughPlayers}
+                      onClick={startGame}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none min-h-[44px]"
+                    >
+                      <Play className="h-4 w-4 mr-1" />
+                      <span className="text-sm">開始遊戲</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={hasReachedMaxPlayers}
+                      onClick={() => createDummyPlayers(1, playerCount)}
+                      className="flex-1 sm:flex-none min-h-[44px]"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      <span className="text-sm">測試玩家</span>
+                    </Button>
+                  </>
+                )}
+              </div>
+              <AdminMenu />
             </div>
           </div>
         </div>
@@ -78,12 +98,22 @@ const Admin = () => {
           <Alert className="mx-2">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle className="text-base">未找到遊戲</AlertTitle>
-            <AlertDescription className="text-sm">請點擊「創建新遊戲」按鈕開始一個新的遊戲。</AlertDescription>
+            <AlertDescription className="text-sm">
+              請點擊「創建新遊戲」按鈕開始一個新的遊戲。
+            </AlertDescription>
           </Alert>
         ) : game.status === GAME_STATUS.JOINING ? (
-          <GameSetupStatus playerCount={playerCount} minPlayers={PLAYER_COUNT.MIN} maxPlayers={PLAYER_COUNT.MAX} />
+          <GameSetupStatus
+            playerCount={playerCount}
+            minPlayers={PLAYER_COUNT.MIN}
+            maxPlayers={PLAYER_COUNT.MAX}
+          />
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             {/* Sticky Tab Bar for Mobile */}
             <div className="sticky top-[73px] sm:top-[81px] z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b mb-4 -mx-4 px-4 py-2">
               <TabsList className="grid grid-cols-4 w-full h-12 sm:h-10">
@@ -125,7 +155,11 @@ const Admin = () => {
                 </CardHeader>
                 <CardContent className="pt-0">
                   {players && game && (
-                    <AdminCombatSelector players={Object.values(players)} game={game} allPlayers={players} />
+                    <AdminCombatSelector
+                      players={Object.values(players)}
+                      game={game}
+                      allPlayers={players}
+                    />
                   )}
                 </CardContent>
               </Card>
@@ -136,7 +170,9 @@ const Admin = () => {
                 <CardHeader className="pb-4">
                   <CardTitle className="text-lg sm:text-xl">血量控制</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0">{players && <AdminHpController players={players} />}</CardContent>
+                <CardContent className="pt-0">
+                  {players && <AdminHpController players={players} />}
+                </CardContent>
               </Card>
             </TabsContent>
 
@@ -165,8 +201,8 @@ const Admin = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
 const GameSetupStatus = ({ playerCount, minPlayers, maxPlayers }) => (
   <Card className="mx-2">
@@ -195,11 +231,15 @@ const GameSetupStatus = ({ playerCount, minPlayers, maxPlayers }) => (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle className="text-base">玩家不足</AlertTitle>
-              <AlertDescription className="text-sm">需要至少 {minPlayers} 名玩家才能開始遊戲。</AlertDescription>
+              <AlertDescription className="text-sm">
+                需要至少 {minPlayers} 名玩家才能開始遊戲。
+              </AlertDescription>
             </Alert>
           ) : (
             <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-900">
-              <AlertTitle className="text-green-800 dark:text-green-300 text-base">準備就緒</AlertTitle>
+              <AlertTitle className="text-green-800 dark:text-green-300 text-base">
+                準備就緒
+              </AlertTitle>
               <AlertDescription className="text-green-700 dark:text-green-400 text-sm">
                 已有足夠玩家，可以開始遊戲。
               </AlertDescription>
@@ -209,6 +249,6 @@ const GameSetupStatus = ({ playerCount, minPlayers, maxPlayers }) => (
       </div>
     </CardContent>
   </Card>
-)
+);
 
-export default Admin
+export default Admin;

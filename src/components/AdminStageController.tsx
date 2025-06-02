@@ -1,5 +1,3 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { DB_PATH, GAME_STAGES } from "@/constants"
 import { useGame } from "@/utils"
