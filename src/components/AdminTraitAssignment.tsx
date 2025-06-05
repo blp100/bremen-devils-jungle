@@ -1,0 +1,497 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+import type { IPlayer } from "@/interfaces";
+import { EVOLUTION_TRAITS } from "@/constants";
+import { updateData } from "@/services/firebaseHelpers";
+import {
+  Check,
+  Zap,
+  User,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+interface AdminTraitAssignmentProps {
+  players: { [key: string]: IPlayer };
+  currentRound: number;
+}
+
+// Chinese trait name mapping
+const TRAIT_LABELS: Record<string, string> = {
+  [EVOLUTION_TRAITS.GENE_MUTATION]: "基因突變",
+  [EVOLUTION_TRAITS.DEADLY_POISON]: "劇毒",
+  [EVOLUTION_TRAITS.BLOODTHIRSTY]: "嗜血",
+  [EVOLUTION_TRAITS.SHARP_SPIKES]: "尖刺",
+  [EVOLUTION_TRAITS.HORUS_EYE]: "赫魯斯之眼",
+  [EVOLUTION_TRAITS.AMPHIBIOUS]: "兩棲",
+  [EVOLUTION_TRAITS.PARASITIC]: "寄生",
+  [EVOLUTION_TRAITS.FOREST_SCEPTER]: "森林權杖",
+  [EVOLUTION_TRAITS.TAIL_REGROWTH]: "斷尾",
+  [EVOLUTION_TRAITS.SPECIES_EXTINCTION]: "物種消亡",
+  [EVOLUTION_TRAITS.LION_KING]: "獅子王",
+  [EVOLUTION_TRAITS.FIERCE_GAZE]: "兇狠目光",
+  [EVOLUTION_TRAITS.HIBERNATION]: "冬眠",
+  [EVOLUTION_TRAITS.SCAVENGER]: "食腐",
+};
+
+export const AdminTraitAssignment = ({
+  players,
+  currentRound,
+}: AdminTraitAssignmentProps) => {
+  const [selectedTraits, setSelectedTraits] = useState<{
+    [playerId: string]: string;
+  }>({});
+  const [assigningTraits, setAssigningTraits] = useState<{
+    [playerId: string]: boolean;
+  }>({});
+  const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
+
+  // Get available traits based on current round
+  const getAvailableTraits = (round: number) => {
+    switch (round) {
+      case 1:
+        return [
+          EVOLUTION_TRAITS.GENE_MUTATION,
+          EVOLUTION_TRAITS.DEADLY_POISON,
+          EVOLUTION_TRAITS.BLOODTHIRSTY,
+          EVOLUTION_TRAITS.SHARP_SPIKES,
+          EVOLUTION_TRAITS.HORUS_EYE,
+        ];
+      case 2:
+        return [
+          EVOLUTION_TRAITS.AMPHIBIOUS,
+          EVOLUTION_TRAITS.PARASITIC,
+          EVOLUTION_TRAITS.FOREST_SCEPTER,
+          EVOLUTION_TRAITS.TAIL_REGROWTH,
+          EVOLUTION_TRAITS.SPECIES_EXTINCTION,
+        ];
+      case 3:
+        return [
+          EVOLUTION_TRAITS.LION_KING,
+          EVOLUTION_TRAITS.FIERCE_GAZE,
+          EVOLUTION_TRAITS.HIBERNATION,
+          EVOLUTION_TRAITS.SCAVENGER,
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const availableTraits = getAvailableTraits(currentRound);
+
+  // Create a map of which traits are already assigned to which players
+  const assignedTraitsMap = useMemo(() => {
+    const traitMap: { [trait: string]: string } = {};
+
+    Object.values(players).forEach((player) => {
+      if (player.evolutionCards && player.evolutionCards.length > 0) {
+        player.evolutionCards.forEach((trait) => {
+          if (availableTraits.includes(trait as EVOLUTION_TRAITS)) {
+            traitMap[trait] = player.id;
+          }
+        });
+      }
+    });
+
+    return traitMap;
+  }, [players, availableTraits]);
+
+  // Check if a trait is already assigned to any player
+  const isTraitAssignedToAnyPlayer = (
+    trait: string,
+    currentPlayerId: string,
+  ) => {
+    return (
+      assignedTraitsMap[trait] !== undefined &&
+      assignedTraitsMap[trait] !== currentPlayerId
+    );
+  };
+
+  // Get the player who has a specific trait
+  const getPlayerWithTrait = (trait: string) => {
+    const playerId = assignedTraitsMap[trait];
+    return playerId ? players[playerId] : null;
+  };
+
+  const handlePlayerClick = (playerId: string) => {
+    if (expandedPlayer === playerId) {
+      setExpandedPlayer(null);
+    } else {
+      setExpandedPlayer(playerId);
+      // Clear any selected trait when switching players
+      if (selectedTraits[playerId]) {
+        setSelectedTraits((prev) => {
+          const updated = { ...prev };
+          delete updated[playerId];
+          return updated;
+        });
+      }
+    }
+  };
+
+  const handleTraitSelect = (playerId: string, trait: string) => {
+    setSelectedTraits((prev) => ({
+      ...prev,
+      [playerId]: trait,
+    }));
+  };
+
+  const handleAssignTrait = async (playerId: string) => {
+    const selectedTrait = selectedTraits[playerId];
+    if (!selectedTrait) {
+      toast.error("請先選擇一個特性");
+      return;
+    }
+
+    const player = players[playerId];
+    if (!player) {
+      toast.error("找不到玩家");
+      return;
+    }
+
+    // Check if player already has this trait
+    if (player.evolutionCards?.includes(selectedTrait)) {
+      toast.error(
+        `${player.nickname} 已經擁有 ${TRAIT_LABELS[selectedTrait]} 特性`,
+      );
+      return;
+    }
+
+    // Check if trait is already assigned to another player
+    if (isTraitAssignedToAnyPlayer(selectedTrait, playerId)) {
+      const assignedPlayer = getPlayerWithTrait(selectedTrait);
+      toast.error(
+        `${TRAIT_LABELS[selectedTrait]} 特性已分配給 ${assignedPlayer?.nickname}`,
+      );
+      return;
+    }
+
+    setAssigningTraits((prev) => ({ ...prev, [playerId]: true }));
+
+    try {
+      const currentTraits = player.evolutionCards || [];
+      const updatedTraits = [...currentTraits, selectedTrait];
+
+      await updateData(`players/${playerId}`, {
+        evolutionCards: updatedTraits,
+      });
+
+      toast.success(
+        `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 特性`,
+      );
+
+      // Clear the selected trait and collapse the player
+      setSelectedTraits((prev) => {
+        const updated = { ...prev };
+        delete updated[playerId];
+        return updated;
+      });
+      setExpandedPlayer(null);
+    } catch (error) {
+      toast.error("分配特性失敗");
+      console.error("Error assigning trait:", error);
+    } finally {
+      setAssigningTraits((prev) => ({ ...prev, [playerId]: false }));
+    }
+  };
+
+  const getTraitDescription = (trait: string) => {
+    const descriptions: Record<EVOLUTION_TRAITS, string> = {
+      [EVOLUTION_TRAITS.GENE_MUTATION]: "進化階段消耗減少3點血量",
+      [EVOLUTION_TRAITS.DEADLY_POISON]: "死亡時攻擊者也會死亡",
+      [EVOLUTION_TRAITS.BLOODTHIRSTY]:
+        "戰鬥時勝者額外獲得2血量，敗者額外失去2血量",
+      [EVOLUTION_TRAITS.SHARP_SPIKES]: "被攻擊時攻擊者先失去2血量",
+      [EVOLUTION_TRAITS.HORUS_EYE]: "討論階段可查看其他玩家血量",
+      [EVOLUTION_TRAITS.AMPHIBIOUS]: "可攻擊同元素玩家",
+      [EVOLUTION_TRAITS.PARASITIC]: "寄生目標獲得血量時自己也獲得相同血量",
+      [EVOLUTION_TRAITS.FOREST_SCEPTER]: "可決定攻擊順序",
+      [EVOLUTION_TRAITS.TAIL_REGROWTH]: "可棄2張攻擊卡保留血量",
+      [EVOLUTION_TRAITS.SPECIES_EXTINCTION]:
+        "可移除特定元素所有玩家5血量（限一次）",
+      [EVOLUTION_TRAITS.LION_KING]: "可指定一名手下，攻擊時手下也會攻擊",
+      [EVOLUTION_TRAITS.FIERCE_GAZE]: "可不使用攻擊卡進行攻擊",
+      [EVOLUTION_TRAITS.HIBERNATION]: "攻擊成功後本階段無法被攻擊",
+      [EVOLUTION_TRAITS.SCAVENGER]: "任何玩家死亡時獲得4血量",
+    };
+    return descriptions[trait as EVOLUTION_TRAITS] || "";
+  };
+
+  const getTraitLabel = (trait: string) => {
+    return TRAIT_LABELS[trait] || trait;
+  };
+
+  const playerList = Object.values(players).sort((a, b) => a.number - b.number);
+
+  if (availableTraits.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            特性分配
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="text-center py-8 text-muted-foreground">
+            <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>當前回合沒有可分配的特性</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <TooltipProvider>
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            特性分配 - 第 {currentRound} 回合
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <ScrollArea className="h-[500px] pr-2">
+            <div className="space-y-3">
+              {playerList.map((player) => {
+                const isExpanded = expandedPlayer === player.id;
+                const isAssigning = assigningTraits[player.id];
+
+                return (
+                  <div
+                    key={player.id}
+                    className="border rounded-lg overflow-hidden transition-all duration-200"
+                  >
+                    {/* Player Header - Always Visible */}
+                    <div
+                      className={`p-4 cursor-pointer transition-colors ${
+                        isExpanded
+                          ? "bg-blue-50 dark:bg-blue-900/20 border-b"
+                          : "bg-muted/30 hover:bg-muted/50"
+                      }`}
+                      onClick={() => handlePlayerClick(player.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold text-base">
+                              {player.number} {player.nickname}
+                            </span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {player.type} • HP: {player.hp}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {/* Trait count indicator */}
+                          {player.evolutionCards &&
+                            player.evolutionCards.length > 0 && (
+                              <Badge variant="secondary" className="text-xs">
+                                {player.evolutionCards.length} 特性
+                              </Badge>
+                            )}
+                          {/* Expand/Collapse Icon */}
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Current Traits - Always Visible */}
+                      {player.evolutionCards &&
+                        player.evolutionCards.length > 0 && (
+                          <div className="mt-3">
+                            <div className="text-sm text-muted-foreground mb-2">
+                              已擁有特性：
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {player.evolutionCards.map((trait, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {getTraitLabel(trait)}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Expanded Content - Trait Assignment */}
+                    {isExpanded && (
+                      <div className="p-4 bg-background border-t">
+                        <div className="space-y-4">
+                          {/* Trait Selection */}
+                          <div className="space-y-3">
+                            <div className="text-sm font-medium text-muted-foreground">
+                              選擇要分配的特性：
+                            </div>
+
+                            <Select
+                              value={selectedTraits[player.id] || ""}
+                              onValueChange={(value) =>
+                                handleTraitSelect(player.id, value)
+                              }
+                            >
+                              <SelectTrigger className="min-h-[44px]">
+                                <SelectValue placeholder="選擇特性..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableTraits.map((trait) => {
+                                  const isAssignedToOther =
+                                    isTraitAssignedToAnyPlayer(
+                                      trait,
+                                      player.id,
+                                    );
+                                  const isAssignedToSelf =
+                                    player.evolutionCards?.includes(trait);
+                                  const isDisabled =
+                                    isAssignedToOther || isAssignedToSelf;
+                                  const assignedPlayer = isAssignedToOther
+                                    ? getPlayerWithTrait(trait)
+                                    : null;
+
+                                  return (
+                                    <SelectItem
+                                      key={trait}
+                                      value={trait}
+                                      disabled={isDisabled}
+                                    >
+                                      <div className="flex items-center justify-between w-full">
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">
+                                            {getTraitLabel(trait)}
+                                          </span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {getTraitDescription(trait)}
+                                          </span>
+                                        </div>
+
+                                        {isAssignedToOther && (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <div className="ml-2 flex items-center">
+                                                <AlertCircle className="h-4 w-4 text-amber-500" />
+                                              </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right">
+                                              <p>
+                                                已分配給{" "}
+                                                {assignedPlayer?.nickname}
+                                              </p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        )}
+
+                                        {isAssignedToSelf && (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <div className="ml-2 flex items-center">
+                                                <Check className="h-4 w-4 text-green-500" />
+                                              </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right">
+                                              <p>已擁有此特性</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        )}
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+
+                            {/* Assign Button */}
+                            <Button
+                              onClick={() => handleAssignTrait(player.id)}
+                              disabled={
+                                !selectedTraits[player.id] || isAssigning
+                              }
+                              className="w-full min-h-[44px]"
+                              size="lg"
+                            >
+                              {isAssigning ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  <span>分配中...</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <Check className="h-4 w-4" />
+                                  <span>確認分配特性</span>
+                                </div>
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* Trait Description */}
+                          {selectedTraits[player.id] && (
+                            <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded border">
+                              <strong>
+                                {getTraitLabel(selectedTraits[player.id])}：
+                              </strong>
+                              {getTraitDescription(selectedTraits[player.id])}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+
+          {/* Round Info */}
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="text-sm text-blue-800 dark:text-blue-300">
+              <strong>第 {currentRound} 回合可用特性：</strong>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {availableTraits.map((trait) => {
+                  const isAssigned = assignedTraitsMap[trait] !== undefined;
+                  return (
+                    <Badge
+                      key={trait}
+                      variant={isAssigned ? "secondary" : "outline"}
+                      className={`text-xs ${isAssigned ? "opacity-60" : ""}`}
+                    >
+                      {getTraitLabel(trait)}
+                      {isAssigned && " ✓"}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
+  );
+};

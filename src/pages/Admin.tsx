@@ -6,11 +6,17 @@ import {
   usePlayers,
   useStartGame,
 } from "../utils";
-import { GAME_STATUS, PLAYER_COUNT } from "../constants";
+import {
+  GAME_STATUS,
+  PLAYER_COUNT,
+  GAME_STAGE_TYPE,
+  GAME_STAGES,
+} from "../constants";
 import { Button } from "@/components/ui/button";
 import { AdminCombatSelector } from "@/components/AdminCombatSelector";
 import { AdminStageController } from "@/components/AdminStageController";
 import { AdminHpController } from "@/components/AdminHpController";
+import { AdminTraitAssignment } from "@/components/AdminTraitAssignment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminLogViewer } from "@/components/AdminLogViewer";
@@ -24,6 +30,7 @@ import {
   FileText,
   Plus,
   Play,
+  Zap,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -37,6 +44,11 @@ const Admin = () => {
   const hasEnoughPlayers = playerCount >= PLAYER_COUNT.MIN;
   const hasReachedMaxPlayers = playerCount >= PLAYER_COUNT.MAX;
   const isGameInProgress = game?.status === GAME_STATUS.IN_PROGRESS;
+
+  // Check if current stage is evolution
+  const currentStageIndex = game?.stageIndex ?? -1;
+  const currentStage = GAME_STAGES[currentStageIndex] ?? -1;
+  const isEvolutionStage = currentStage.type === GAME_STAGE_TYPE.EVOLUTION;
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,8 +130,10 @@ const Admin = () => {
             className="w-full"
           >
             {/* Sticky Tab Bar for Mobile */}
-            <div className="sticky top-[73px] sm:top-[81px] z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b mb-4 -mx-4 px-4 py-2">
-              <TabsList className="grid grid-cols-4 w-full h-12 sm:h-10">
+            <div className="sticky top-[89px] sm:top-[97px] z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b mb-4 -mx-4 px-4 py-2">
+              <TabsList
+                className={`grid w-full h-12 sm:h-10 ${isEvolutionStage ? "grid-cols-5" : "grid-cols-4"}`}
+              >
                 <TabsTrigger
                   value="combat"
                   className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
@@ -141,6 +155,15 @@ const Admin = () => {
                   <Clock className="h-4 w-4" />
                   <span>階段</span>
                 </TabsTrigger>
+                {isEvolutionStage && (
+                  <TabsTrigger
+                    value="traits"
+                    className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
+                  >
+                    <Zap className="h-4 w-4" />
+                    <span>特性</span>
+                  </TabsTrigger>
+                )}
                 <TabsTrigger
                   value="log"
                   className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
@@ -189,6 +212,17 @@ const Admin = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {isEvolutionStage && (
+              <TabsContent value="traits" className="mt-0">
+                {players && game && (
+                  <AdminTraitAssignment
+                    players={players}
+                    currentRound={game.round || 1}
+                  />
+                )}
+              </TabsContent>
+            )}
 
             <TabsContent value="log" className="mt-0">
               <Card>
