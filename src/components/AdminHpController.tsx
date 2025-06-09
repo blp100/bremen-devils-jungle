@@ -102,8 +102,7 @@ const PlayerHpEditor = ({
           className="min-h-[48px] text-base"
           size="lg"
         >
-          <Minus className="h-5 w-5 mr-1" />
-          -5
+          <Minus className="h-5 w-5 mr-1" />5
         </Button>
         <Button
           onClick={() => adjustHp(5)}
@@ -111,8 +110,7 @@ const PlayerHpEditor = ({
           className="min-h-[48px] text-base bg-green-600 hover:bg-green-700"
           size="lg"
         >
-          <Plus className="h-5 w-5 mr-1" />
-          +5
+          <Plus className="h-5 w-5 mr-1" />5
         </Button>
         <Button
           onClick={() => adjustHp(-1)}
@@ -120,8 +118,7 @@ const PlayerHpEditor = ({
           className="min-h-[48px] text-base"
           size="lg"
         >
-          <Minus className="h-5 w-5 mr-1" />
-          -1
+          <Minus className="h-5 w-5 mr-1" />1
         </Button>
         <Button
           onClick={() => adjustHp(1)}
@@ -129,8 +126,7 @@ const PlayerHpEditor = ({
           className="min-h-[48px] text-base"
           size="lg"
         >
-          <Plus className="h-5 w-5 mr-1" />
-          +1
+          <Plus className="h-5 w-5 mr-1" />1
         </Button>
       </div>
 
