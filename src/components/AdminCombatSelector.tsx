@@ -1,87 +1,188 @@
-import { useState } from "react"
-import type { IPlayer } from "@/interfaces"
-import { Button } from "@/components/ui/button"
-import clsx from "clsx"
-import { toast } from "sonner"
-import { handlePlayerAttack } from "@/services/combatServices"
-import type { IGame } from "@/interfaces"
-import { GAME_STAGE_TYPE, GAME_STAGES } from "@/constants"
-import { Swords, RotateCcw, Zap } from "lucide-react"
+"use client";
+
+import { useState } from "react";
+import type { IPlayer } from "@/interfaces";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import clsx from "clsx";
+import { toast } from "sonner";
+import { handlePlayerAttack } from "@/services/combatServices";
+import type { IGame } from "@/interfaces";
+import { GAME_STAGE_TYPE, GAME_STAGES, EVOLUTION_TRAITS } from "@/constants";
+import { Swords, RotateCcw, Zap } from "lucide-react";
 
 interface AdminCombatSelectorProps {
-  players: IPlayer[]
-  game: IGame
-  allPlayers: { [key: string]: IPlayer }
+  players: IPlayer[];
+  game: IGame;
+  allPlayers: { [key: string]: IPlayer };
 }
 
-export const AdminCombatSelector = ({ players, game, allPlayers }: AdminCombatSelectorProps) => {
-  const [attacker, setAttacker] = useState<IPlayer | null>(null)
-  const [target, setTarget] = useState<IPlayer | null>(null)
+// Chinese trait name mapping (same as in AdminTraitAssignment)
+const TRAIT_LABELS: Record<string, string> = {
+  [EVOLUTION_TRAITS.GENE_MUTATION]: "基因突變",
+  [EVOLUTION_TRAITS.DEADLY_POISON]: "劇毒",
+  [EVOLUTION_TRAITS.BLOODTHIRSTY]: "嗜血",
+  [EVOLUTION_TRAITS.SHARP_SPIKES]: "尖刺",
+  [EVOLUTION_TRAITS.HORUS_EYE]: "赫魯斯之眼",
+  [EVOLUTION_TRAITS.AMPHIBIOUS]: "兩棲",
+  [EVOLUTION_TRAITS.PARASITIC]: "寄生",
+  [EVOLUTION_TRAITS.FOREST_SCEPTER]: "森林權杖",
+  [EVOLUTION_TRAITS.TAIL_REGROWTH]: "斷尾",
+  [EVOLUTION_TRAITS.SPECIES_EXTINCTION]: "物種消亡",
+  [EVOLUTION_TRAITS.LION_KING]: "獅子王",
+  [EVOLUTION_TRAITS.FIERCE_GAZE]: "兇狠目光",
+  [EVOLUTION_TRAITS.HIBERNATION]: "冬眠",
+  [EVOLUTION_TRAITS.SCAVENGER]: "食腐",
+};
 
-  const canBeAttacker = (player: IPlayer) => !player.isResting
-  const canBeTarget = (player: IPlayer) => !player.protected
+// Player type Chinese labels
+const PLAYER_TYPE_LABELS: Record<string, string> = {
+  fire: "火",
+  water: "水",
+  wood: "木",
+  electric: "電",
+};
+
+export const AdminCombatSelector = ({
+  players,
+  game,
+  allPlayers,
+}: AdminCombatSelectorProps) => {
+  const [attacker, setAttacker] = useState<IPlayer | null>(null);
+  const [target, setTarget] = useState<IPlayer | null>(null);
+
+  // Sort players by their number property
+  const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
+
+  const canBeAttacker = (player: IPlayer) => !player.isResting;
+  const canBeTarget = (player: IPlayer) => !player.protected;
   const isDisabled = (player: IPlayer) => {
-    if (!attacker) return !canBeAttacker(player)
-    if (!target && player.id !== attacker.id) return !canBeTarget(player)
-    return false
-  }
-  const isCombatStage = GAME_STAGES[game.stageIndex]?.type === GAME_STAGE_TYPE.COMBAT
+    if (!attacker) return !canBeAttacker(player);
+    if (!target && player.id !== attacker.id) return !canBeTarget(player);
+    return false;
+  };
+  const isCombatStage =
+    GAME_STAGES[game.stageIndex]?.type === GAME_STAGE_TYPE.COMBAT;
 
   const handleSelectPlayer = (player: IPlayer) => {
     if (!attacker && canBeAttacker(player)) {
-      setAttacker(player)
-    } else if (attacker && !target && player.id !== attacker.id && canBeTarget(player)) {
-      setTarget(player)
+      setAttacker(player);
+    } else if (
+      attacker &&
+      !target &&
+      player.id !== attacker.id &&
+      canBeTarget(player)
+    ) {
+      setTarget(player);
     }
-  }
+  };
 
   const handleReset = () => {
-    setAttacker(null)
-    setTarget(null)
-  }
+    setAttacker(null);
+    setTarget(null);
+  };
 
   const handleAttack = async () => {
     if (attacker && target) {
-      const result = await handlePlayerAttack(attacker, target, allPlayers, game)
+      const result = await handlePlayerAttack(
+        attacker,
+        target,
+        allPlayers,
+        game,
+      );
 
       if (result.success) {
-        toast.success(`${attacker.nickname} 攻擊成功，對 ${target.nickname} 造成 ${result.damageDealt} 傷害`)
+        toast.success(
+          `${attacker.nickname} 攻擊成功，對 ${target.nickname} 造成 ${result.damageDealt} 傷害`,
+        );
       } else {
-        toast.error(`${attacker.nickname} 攻擊失敗，損失 ${result.damageDealt} 血量，${target.nickname} 回復同等血量`)
+        toast.error(
+          `${attacker.nickname} 攻擊失敗，損失 ${result.damageDealt} 血量，${target.nickname} 回復同等血量`,
+        );
       }
 
-      handleReset()
+      handleReset();
     }
-  }
+  };
 
   const isSelected = (player: IPlayer) => {
-    return attacker?.id === player.id || target?.id === player.id
-  }
+    return attacker?.id === player.id || target?.id === player.id;
+  };
+
+  const getTraitLabel = (trait: string) => {
+    return TRAIT_LABELS[trait] || trait;
+  };
+
+  const getPlayerTypeLabel = (type: string) => {
+    return PLAYER_TYPE_LABELS[type] || type;
+  };
 
   return (
     <div className="space-y-6">
       {/* Player Selection Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {players.map((player) => (
+        {sortedPlayers.map((player) => (
           <Button
             key={player.id}
             onClick={() => handleSelectPlayer(player)}
             disabled={isDisabled(player)}
             variant="outline"
             className={clsx(
-              "flex flex-col items-center justify-center py-6 min-h-[80px] text-left relative",
+              "flex flex-col items-start justify-start py-4 px-4 min-h-[100px] text-left relative h-auto",
               isDisabled(player) && "opacity-50 cursor-not-allowed",
-              attacker?.id === player.id && "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20",
-              target?.id === player.id && "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20",
+              attacker?.id === player.id &&
+                "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20",
+              target?.id === player.id &&
+                "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20",
               isSelected(player) && "font-bold",
             )}
           >
-            <div className="text-center">
-              <div className="text-base font-semibold">
-                {player.number} {player.nickname}
+            <div className="w-full space-y-2">
+              {/* Player Name and Number */}
+              <div className="flex items-center justify-between w-full">
+                <div className="text-base font-semibold">
+                  {player.number} {player.nickname}
+                </div>
+                {attacker?.id === player.id && (
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                )}
+                {target?.id === player.id && (
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                )}
               </div>
-              <div className="text-sm text-muted-foreground mt-1">HP: {player.hp}</div>
-              <div className="flex gap-1 mt-2 justify-center">
+
+              {/* HP and Type */}
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium">HP: {player.hp}</span>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">
+                  {getPlayerTypeLabel(player.type)}
+                </span>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">
+                  元素 {player.elementCount}
+                </span>
+              </div>
+
+              {/* Evolution Traits */}
+              {player.evolutionCards && player.evolutionCards.length > 0 && (
+                <div className="w-full">
+                  <div className="flex flex-wrap gap-1">
+                    {player.evolutionCards.map((trait, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        {getTraitLabel(trait)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Status Indicators */}
+              <div className="flex gap-1 flex-wrap">
                 {player.isResting && (
                   <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
                     休息中
@@ -94,10 +195,6 @@ export const AdminCombatSelector = ({ players, game, allPlayers }: AdminCombatSe
                 )}
               </div>
             </div>
-            {attacker?.id === player.id && (
-              <div className="absolute top-2 right-2 w-3 h-3 bg-blue-500 rounded-full"></div>
-            )}
-            {target?.id === player.id && <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full"></div>}
           </Button>
         ))}
       </div>
@@ -153,5 +250,5 @@ export const AdminCombatSelector = ({ players, game, allPlayers }: AdminCombatSe
         </div>
       )}
     </div>
-  )
-}
+  );
+};
