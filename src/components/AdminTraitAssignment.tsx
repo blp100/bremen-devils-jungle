@@ -23,6 +23,8 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
+  Heart,
+  ArrowRight,
 } from "lucide-react";
 import {
   Tooltip,
@@ -60,6 +62,9 @@ export const AdminTraitAssignment = ({
 }: AdminTraitAssignmentProps) => {
   const [selectedTraits, setSelectedTraits] = useState<{
     [playerId: string]: string;
+  }>({});
+  const [hpDeductions, setHpDeductions] = useState<{
+    [playerId: string]: number;
   }>({});
   const [assigningTraits, setAssigningTraits] = useState<{
     [playerId: string]: boolean;
@@ -138,9 +143,16 @@ export const AdminTraitAssignment = ({
       setExpandedPlayer(null);
     } else {
       setExpandedPlayer(playerId);
-      // Clear any selected trait when switching players
+      // Clear any selected trait and HP deduction when switching players
       if (selectedTraits[playerId]) {
         setSelectedTraits((prev) => {
+          const updated = { ...prev };
+          delete updated[playerId];
+          return updated;
+        });
+      }
+      if (hpDeductions[playerId] !== undefined) {
+        setHpDeductions((prev) => {
           const updated = { ...prev };
           delete updated[playerId];
           return updated;
@@ -154,10 +166,29 @@ export const AdminTraitAssignment = ({
       ...prev,
       [playerId]: trait,
     }));
+    // Reset HP deduction when trait changes
+    setHpDeductions((prev) => ({
+      ...prev,
+      [playerId]: 0,
+    }));
+  };
+
+  const handleHpDeductionChange = (playerId: string, value: number) => {
+    const player = players[playerId];
+    if (!player) return;
+
+    // Ensure HP deduction doesn't exceed current HP or go below 0
+    const clampedValue = Math.max(0, Math.min(value, player.hp));
+    setHpDeductions((prev) => ({
+      ...prev,
+      [playerId]: clampedValue,
+    }));
   };
 
   const handleAssignTrait = async (playerId: string) => {
     const selectedTrait = selectedTraits[playerId];
+    const hpDeduction = hpDeductions[playerId] || 0;
+
     if (!selectedTrait) {
       toast.error("請先選擇一個特性");
       return;
@@ -191,17 +222,25 @@ export const AdminTraitAssignment = ({
     try {
       const currentTraits = player.evolutionCards || [];
       const updatedTraits = [...currentTraits, selectedTrait];
+      const newHp = Math.max(0, player.hp - hpDeduction);
 
       await updateData(`players/${playerId}`, {
         evolutionCards: updatedTraits,
+        hp: newHp,
       });
 
+      const hpMessage = hpDeduction > 0 ? ` 並扣除 ${hpDeduction} 點血量` : "";
       toast.success(
-        `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 特性`,
+        `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 特性${hpMessage}`,
       );
 
-      // Clear the selected trait and collapse the player
+      // Clear the selected trait, HP deduction and collapse the player
       setSelectedTraits((prev) => {
+        const updated = { ...prev };
+        delete updated[playerId];
+        return updated;
+      });
+      setHpDeductions((prev) => {
         const updated = { ...prev };
         delete updated[playerId];
         return updated;
@@ -277,6 +316,9 @@ export const AdminTraitAssignment = ({
               {playerList.map((player) => {
                 const isExpanded = expandedPlayer === player.id;
                 const isAssigning = assigningTraits[player.id];
+                const selectedTrait = selectedTraits[player.id];
+                const hpDeduction = hpDeductions[player.id] || 0;
+                const resultingHp = player.hp - hpDeduction;
 
                 return (
                   <div
@@ -428,6 +470,86 @@ export const AdminTraitAssignment = ({
                               </SelectContent>
                             </Select>
 
+                            {/* HP Deduction Input - Only show when trait is selected */}
+                            {selectedTrait && (
+                              <div className="space-y-3">
+                                <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                                  <Heart className="h-4 w-4" />
+                                  血量扣除：
+                                </div>
+
+                                {/* Mobile-friendly HP control panel */}
+                                <div className="flex items-center justify-between bg-muted/30 rounded-lg p-1 border">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-10 w-10 rounded-md flex items-center justify-center"
+                                    onClick={() =>
+                                      handleHpDeductionChange(
+                                        player.id,
+                                        Math.max(
+                                          0,
+                                          (hpDeductions[player.id] || 0) - 1,
+                                        ),
+                                      )
+                                    }
+                                    disabled={hpDeduction <= 0}
+                                  >
+                                    <span className="text-lg font-bold">-</span>
+                                  </Button>
+
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-2xl font-bold">
+                                      {hpDeduction}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      扣除血量
+                                    </span>
+                                  </div>
+
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-10 w-10 rounded-md flex items-center justify-center"
+                                    onClick={() =>
+                                      handleHpDeductionChange(
+                                        player.id,
+                                        Math.min(
+                                          player.hp,
+                                          (hpDeductions[player.id] || 0) + 1,
+                                        ),
+                                      )
+                                    }
+                                    disabled={hpDeduction >= player.hp}
+                                  >
+                                    <span className="text-lg font-bold">+</span>
+                                  </Button>
+                                </div>
+
+                                {/* HP Preview */}
+                                <div className="flex items-center gap-2 text-sm bg-muted/50 p-3 rounded border">
+                                  <Heart className="h-4 w-4 text-red-500" />
+                                  <span className="font-medium">
+                                    血量變化：
+                                  </span>
+                                  <span className="font-mono">{player.hp}</span>
+                                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                  <span
+                                    className={`font-mono font-bold ${resultingHp === 0 ? "text-red-600" : resultingHp < player.hp ? "text-orange-600" : "text-foreground"}`}
+                                  >
+                                    {resultingHp}
+                                  </span>
+                                  {hpDeduction > 0 && (
+                                    <span className="text-xs text-muted-foreground ml-2">
+                                      (-{hpDeduction})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
                             {/* Assign Button */}
                             <Button
                               onClick={() => handleAssignTrait(player.id)}
@@ -445,7 +567,12 @@ export const AdminTraitAssignment = ({
                               ) : (
                                 <div className="flex items-center gap-2">
                                   <Check className="h-4 w-4" />
-                                  <span>確認分配特性</span>
+                                  <span>
+                                    確認分配特性
+                                    {selectedTrait &&
+                                      hpDeduction > 0 &&
+                                      ` (扣除 ${hpDeduction} HP)`}
+                                  </span>
                                 </div>
                               )}
                             </Button>
