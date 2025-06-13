@@ -43,7 +43,7 @@ const Admin = () => {
   const playerCount = Object.values(players || {}).length;
   const hasEnoughPlayers = playerCount >= PLAYER_COUNT.MIN;
   const hasReachedMaxPlayers = playerCount >= PLAYER_COUNT.MAX;
-  const isGameInProgress = game?.status === GAME_STATUS.IN_PROGRESS;
+  // const isGameInProgress = game?.status === GAME_STATUS.IN_PROGRESS;
 
   // Check if current stage is evolution
   const currentStageIndex = game?.stageIndex ?? -1;
@@ -241,7 +241,17 @@ const Admin = () => {
   );
 };
 
-const GameSetupStatus = ({ playerCount, minPlayers, maxPlayers }) => (
+type GameSetupStatusProps = {
+  playerCount: number;
+  minPlayers: number;
+  maxPlayers: number;
+};
+
+const GameSetupStatus = ({
+  playerCount,
+  minPlayers,
+  maxPlayers,
+}: GameSetupStatusProps) => (
   <Card className="mx-2">
     <CardHeader className="pb-4">
       <CardTitle className="text-lg sm:text-xl">遊戲設置</CardTitle>
