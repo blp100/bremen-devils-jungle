@@ -75,7 +75,7 @@ const Admin = () => {
                 className="flex-1 sm:flex-none min-h-[44px]"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                <span className="text-sm">創建新遊戲</span>
+                <span className="text-sm">建立新遊戲</span>
               </Button>
             )}
             {game?.status === GAME_STATUS.JOINING && (
@@ -115,7 +115,7 @@ const Admin = () => {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle className="text-base">未找到遊戲</AlertTitle>
             <AlertDescription className="text-sm">
-              請點擊「創建新遊戲」按鈕開始一個新的遊戲。
+              請點擊「建立新遊戲」按鈕開始一個新的遊戲。
             </AlertDescription>
           </Alert>
         ) : game.status === GAME_STATUS.JOINING ? (
