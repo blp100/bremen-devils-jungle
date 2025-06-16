@@ -161,7 +161,7 @@ const Admin = () => {
                     className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
                   >
                     <Zap className="h-4 w-4" />
-                    <span>特性</span>
+                    <span>性狀</span>
                   </TabsTrigger>
                 )}
                 <TabsTrigger

@@ -217,7 +217,7 @@ export const AdminCombatSelector = ({
               <div className="flex gap-1 flex-wrap">
                 {player.isResting && (
                   <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
-                    休息中
+                    回合結束
                   </span>
                 )}
                 {player.protected && (

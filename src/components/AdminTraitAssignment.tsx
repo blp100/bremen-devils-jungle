@@ -239,7 +239,7 @@ export const AdminTraitAssignment = ({
     const targetPlayerId = targetPlayers[playerId];
 
     if (!selectedTrait) {
-      toast.error("請先選擇一個特性");
+      toast.error("請先選擇一個性狀");
       return;
     }
 
@@ -252,7 +252,7 @@ export const AdminTraitAssignment = ({
     // Check if player already has this trait
     if (player.evolutionCards?.includes(selectedTrait)) {
       toast.error(
-        `${player.nickname} 已經擁有 ${TRAIT_LABELS[selectedTrait]} 特性`,
+        `${player.nickname} 已經擁有 ${TRAIT_LABELS[selectedTrait]} 性狀`,
       );
       return;
     }
@@ -261,14 +261,14 @@ export const AdminTraitAssignment = ({
     if (isTraitAssignedToAnyPlayer(selectedTrait, playerId)) {
       const assignedPlayer = getPlayerWithTrait(selectedTrait);
       toast.error(
-        `${TRAIT_LABELS[selectedTrait]} 特性已分配給 ${assignedPlayer?.nickname}`,
+        `${TRAIT_LABELS[selectedTrait]} 性狀已分配給 ${assignedPlayer?.nickname}`,
       );
       return;
     }
 
     // Check if target player is required but not selected
     if (traitRequiresTarget(selectedTrait) && !targetPlayerId) {
-      toast.error(`${TRAIT_LABELS[selectedTrait]} 特性需要選擇目標玩家`);
+      toast.error(`${TRAIT_LABELS[selectedTrait]} 性狀需要選擇目標玩家`);
       return;
     }
 
@@ -307,7 +307,7 @@ export const AdminTraitAssignment = ({
       await updateData(`players/${playerId}`, updatePayload);
 
       // Create success message
-      let message = `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 特性`;
+      let message = `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 性狀`;
 
       if (finalHpDeduction > 0) {
         message += ` 並扣除 ${finalHpDeduction} 點血量`;
@@ -341,7 +341,7 @@ export const AdminTraitAssignment = ({
       });
       setExpandedPlayer(null);
     } catch (error) {
-      toast.error("分配特性失敗");
+      toast.error("分配性狀失敗");
       console.error("Error assigning trait:", error);
     } finally {
       setAssigningTraits((prev) => ({ ...prev, [playerId]: false }));
@@ -393,13 +393,13 @@ export const AdminTraitAssignment = ({
         <CardHeader className="pb-4">
           <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
             <Zap className="h-5 w-5" />
-            特性分配
+            性狀分配
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="text-center py-8 text-muted-foreground">
             <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>當前回合沒有可分配的特性</p>
+            <p>當前回合沒有可分配的性狀</p>
           </div>
         </CardContent>
       </Card>
@@ -412,7 +412,7 @@ export const AdminTraitAssignment = ({
         <CardHeader className="pb-4">
           <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
             <Zap className="h-5 w-5" />
-            特性分配 - 第 {currentRound} 回合
+            性狀分配 - 第 {currentRound} 回合
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
@@ -475,7 +475,7 @@ export const AdminTraitAssignment = ({
                           {player.evolutionCards &&
                             player.evolutionCards.length > 0 && (
                               <Badge variant="secondary" className="text-xs">
-                                {player.evolutionCards.length} 特性
+                                {player.evolutionCards.length} 性狀
                               </Badge>
                             )}
                           {/* Expand/Collapse Icon */}
@@ -492,7 +492,7 @@ export const AdminTraitAssignment = ({
                         player.evolutionCards.length > 0 && (
                           <div className="mt-3">
                             <div className="text-sm text-muted-foreground mb-2">
-                              已擁有特性：
+                              已擁有性狀：
                             </div>
                             <div className="flex flex-wrap gap-1">
                               {player.evolutionCards.map((trait, index) => (
@@ -539,7 +539,7 @@ export const AdminTraitAssignment = ({
                           {/* Trait Selection */}
                           <div className="space-y-3">
                             <div className="text-sm font-medium text-muted-foreground">
-                              選擇要分配的特性：
+                              選擇要分配的性狀：
                             </div>
 
                             <Select
@@ -549,7 +549,7 @@ export const AdminTraitAssignment = ({
                               }
                             >
                               <SelectTrigger className="min-h-[44px]">
-                                <SelectValue placeholder="選擇特性..." />
+                                <SelectValue placeholder="選擇性狀..." />
                               </SelectTrigger>
                               <SelectContent>
                                 {availableTraits.map((trait) => {
@@ -609,7 +609,7 @@ export const AdminTraitAssignment = ({
                                               </div>
                                             </TooltipTrigger>
                                             <TooltipContent side="right">
-                                              <p>已擁有此特性</p>
+                                              <p>已擁有此性狀</p>
                                             </TooltipContent>
                                           </Tooltip>
                                         )}
@@ -791,7 +791,7 @@ export const AdminTraitAssignment = ({
                                       </span>
                                     </div>
                                     <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                                      特性分配時傷害減少{" "}
+                                      性狀分配時傷害減少{" "}
                                       {geneticMutationReduction} 點 （原本{" "}
                                       {hpDeduction} → 實際 {finalHpDeduction}）
                                     </div>
@@ -820,7 +820,7 @@ export const AdminTraitAssignment = ({
                                 <div className="flex items-center gap-2">
                                   <Check className="h-4 w-4" />
                                   <span>
-                                    確認分配特性
+                                    確認分配性狀
                                     {selectedTrait &&
                                       finalHpDeduction > 0 &&
                                       ` (扣除 ${finalHpDeduction} HP)`}
@@ -853,7 +853,7 @@ export const AdminTraitAssignment = ({
           {/* Round Info */}
           <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="text-sm text-blue-800 dark:text-blue-300">
-              <strong>第 {currentRound} 回合可用特性：</strong>
+              <strong>第 {currentRound} 回合可用性狀：</strong>
               <div className="mt-1 flex flex-wrap gap-1">
                 {availableTraits.map((trait) => {
                   const isAssigned = assignedTraitsMap[trait] !== undefined;
