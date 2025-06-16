@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { handlePlayerAttack } from "@/services/combatServices";
 import type { IGame } from "@/interfaces";
 import { GAME_STAGE_TYPE, GAME_STAGES, EVOLUTION_TRAITS } from "@/constants";
-import { Swords, RotateCcw, Zap } from "lucide-react";
+import { updateData } from "@/services/firebaseHelpers";
+import { Swords, RotateCcw, Zap, RefreshCw } from "lucide-react";
 
 interface AdminCombatSelectorProps {
   players: IPlayer[];
@@ -50,6 +51,7 @@ export const AdminCombatSelector = ({
 }: AdminCombatSelectorProps) => {
   const [attacker, setAttacker] = useState<IPlayer | null>(null);
   const [target, setTarget] = useState<IPlayer | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Sort players by their number property
   const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
@@ -102,6 +104,36 @@ export const AdminCombatSelector = ({
       }
 
       handleReset();
+    }
+  };
+
+  const handleResetAllCombatState = async () => {
+    setIsResetting(true);
+
+    try {
+      // Create update promises for all players
+      const updatePromises = Object.values(allPlayers).map(async (player) => {
+        const updatePayload: Partial<IPlayer> = {
+          hp: 25,
+          isResting: false,
+          protected: false,
+        };
+
+        return updateData(`players/${player.id}`, updatePayload);
+      });
+
+      // Execute all updates
+      await Promise.all(updatePromises);
+
+      toast.success(`已重置所有玩家的血量與戰鬥狀態`);
+
+      // Clear current selection
+      handleReset();
+    } catch (error) {
+      toast.error("重置戰鬥狀態失敗");
+      console.error("Error resetting combat state:", error);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -222,24 +254,48 @@ export const AdminCombatSelector = ({
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3">
+        {/* Primary Combat Actions */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button
+            onClick={handleAttack}
+            disabled={!attacker || !target || !isCombatStage}
+            className="flex-1 min-h-[48px] text-base"
+            size="lg"
+          >
+            <Swords className="h-5 w-5 mr-2" />
+            執行攻擊
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            className="flex-1 sm:flex-none min-h-[48px] text-base"
+            size="lg"
+          >
+            <RotateCcw className="h-5 w-5 mr-2" />
+            重新選擇
+          </Button>
+        </div>
+
+        {/* Reset Combat State Button */}
         <Button
-          onClick={handleAttack}
-          disabled={!attacker || !target || !isCombatStage}
-          className="flex-1 min-h-[48px] text-base"
+          variant="destructive"
+          onClick={handleResetAllCombatState}
+          disabled={isResetting}
+          className="w-full min-h-[48px] text-base"
           size="lg"
         >
-          <Swords className="h-5 w-5 mr-2" />
-          執行攻擊
-        </Button>
-        <Button
-          variant="outline"
-          onClick={handleReset}
-          className="flex-1 sm:flex-none min-h-[48px] text-base"
-          size="lg"
-        >
-          <RotateCcw className="h-5 w-5 mr-2" />
-          重新選擇
+          {isResetting ? (
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span>重置中...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5" />
+              <span>重置血量與戰鬥狀態</span>
+            </div>
+          )}
         </Button>
       </div>
 
