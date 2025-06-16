@@ -10,7 +10,7 @@ import { handlePlayerAttack } from "@/services/combatServices";
 import type { IGame } from "@/interfaces";
 import { GAME_STAGE_TYPE, GAME_STAGES, EVOLUTION_TRAITS } from "@/constants";
 import { updateData } from "@/services/firebaseHelpers";
-import { Swords, RotateCcw, Zap, RefreshCw } from "lucide-react";
+import { Swords, RotateCcw, Zap, RefreshCw, Heart } from "lucide-react";
 
 interface AdminCombatSelectorProps {
   players: IPlayer[];
@@ -129,10 +129,6 @@ export const AdminCombatSelector = ({
     }
   };
 
-  const isSelected = (player: IPlayer) => {
-    return attacker?.id === player.id || target?.id === player.id;
-  };
-
   const getTraitLabel = (trait: string) => {
     return TRAIT_LABELS[trait] || trait;
   };
@@ -144,7 +140,7 @@ export const AdminCombatSelector = ({
   return (
     <div className="space-y-6">
       {/* Player Selection Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedPlayers.map((player) => (
           <Button
             key={player.id}
@@ -152,57 +148,52 @@ export const AdminCombatSelector = ({
             disabled={isDisabled(player)}
             variant="outline"
             className={clsx(
-              "flex flex-col items-start justify-start py-4 px-4 min-h-[100px] text-left relative h-auto",
+              "flex justify-between items-center p-6 h-auto min-h-[80px] text-left hover:bg-muted/50 dark:hover:bg-muted/50",
               isDisabled(player) && "opacity-50 cursor-not-allowed",
               attacker?.id === player.id &&
                 "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:ring-blue-400",
               target?.id === player.id &&
                 "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20 dark:ring-red-400",
-              isSelected(player) && "font-bold",
             )}
           >
-            <div className="w-full space-y-2">
-              <div className="flex items-center justify-between w-full">
-                <div className="text-sm font-semibold">
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="font-semibold text-base">
                   {player.number} {player.nickname}
                 </div>
+                <div className="text-sm text-muted-foreground">
+                  {getPlayerTypeLabel(player.type)} • 元素 {player.elementCount}
+                </div>
+                {/* Evolution Traits */}
+                {player.evolutionCards && player.evolutionCards.length > 0 && (
+                  <div className="mt-2">
+                    <div className="flex flex-wrap gap-1">
+                      {player.evolutionCards.map((trait, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {getTraitLabel(trait)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-2 mb-1">
+                <Heart className="h-4 w-4 text-red-500 dark:text-red-400" />
+                <span className="text-xl font-bold">{player.hp}</span>
+              </div>
+              <div className="flex gap-1 flex-wrap justify-end">
                 {attacker?.id === player.id && (
                   <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
                 )}
                 {target?.id === player.id && (
                   <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
                 )}
-              </div>
-
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium">HP: {player.hp}</span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground">
-                  {getPlayerTypeLabel(player.type)}
-                </span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground">
-                  元素 {player.elementCount}
-                </span>
-              </div>
-
-              {player.evolutionCards && player.evolutionCards.length > 0 && (
-                <div className="w-full">
-                  <div className="flex flex-wrap gap-1">
-                    {player.evolutionCards.map((trait, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {getTraitLabel(trait)}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-1 flex-wrap">
                 {player.isResting && (
                   <span className="text-xs bg-yellow-100 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
                     回合結束

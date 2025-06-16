@@ -19,7 +19,6 @@ import { updateData } from "@/services/firebaseHelpers";
 import {
   Check,
   Zap,
-  User,
   ChevronDown,
   ChevronUp,
   AlertCircle,
@@ -447,37 +446,45 @@ export const AdminTraitAssignment = ({
                 return (
                   <div
                     key={player.id}
-                    className="border rounded-lg overflow-hidden transition-all duration-200"
+                    className="border rounded-lg overflow-hidden transition-all duration-200 hover:shadow-sm"
                   >
                     {/* Player Header - Always Visible */}
                     <div
-                      className={`p-4 cursor-pointer transition-colors ${
+                      className={`p-6 cursor-pointer transition-colors hover:bg-muted/50 dark:hover:bg-muted/50 ${
                         isExpanded
                           ? "bg-blue-50 dark:bg-blue-900/20 border-b"
-                          : "bg-muted/30 hover:bg-muted/50"
+                          : "bg-muted/30"
                       }`}
                       onClick={() => handlePlayerClick(player.id)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold text-base">
+                          <div>
+                            <div className="font-semibold text-base">
                               {player.number} {player.nickname}
-                            </span>
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {getPlayerTypeLabel(player.type)} • HP: {player.hp}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {getPlayerTypeLabel(player.type)} • HP:{" "}
+                              {player.hp}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {/* Trait count indicator */}
-                          {player.evolutionCards &&
-                            player.evolutionCards.length > 0 && (
-                              <Badge variant="secondary" className="text-xs">
-                                {player.evolutionCards.length} 性狀
-                              </Badge>
-                            )}
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <div className="flex items-center gap-2">
+                              <Heart className="h-4 w-4 text-red-500 dark:text-red-400" />
+                              <span className="text-xl font-bold">
+                                {player.hp}
+                              </span>
+                            </div>
+                            {/* Trait count indicator */}
+                            {player.evolutionCards &&
+                              player.evolutionCards.length > 0 && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {player.evolutionCards.length} 個性狀
+                                </div>
+                              )}
+                          </div>
                           {/* Expand/Collapse Icon */}
                           {isExpanded ? (
                             <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -490,7 +497,7 @@ export const AdminTraitAssignment = ({
                       {/* Current Traits - Always Visible */}
                       {player.evolutionCards &&
                         player.evolutionCards.length > 0 && (
-                          <div className="mt-3">
+                          <div className="mt-4">
                             <div className="text-sm text-muted-foreground mb-2">
                               已擁有性狀：
                             </div>
@@ -663,11 +670,8 @@ export const AdminTraitAssignment = ({
                                               {targetPlayer.nickname}
                                             </span>
                                             <span className="text-xs text-muted-foreground">
-                                              (
-                                              {getPlayerTypeLabel(
-                                                targetPlayer.type,
-                                              )}{" "}
-                                              • HP: {targetPlayer.hp})
+                                              ({targetPlayer.type} • HP:{" "}
+                                              {targetPlayer.hp})
                                             </span>
                                           </div>
                                         </SelectItem>
