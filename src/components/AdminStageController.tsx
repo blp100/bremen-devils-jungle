@@ -44,7 +44,6 @@ export const AdminStageController = () => {
       const newStageIndex = currentStageIndex - 1;
       const newStage = GAME_STAGES[newStageIndex];
 
-      // Check if transitioning from COMBAT to non-COMBAT stage
       if (
         currentStage?.type === GAME_STAGE_TYPE.COMBAT &&
         newStage?.type !== GAME_STAGE_TYPE.COMBAT
@@ -63,7 +62,6 @@ export const AdminStageController = () => {
       const newStageIndex = currentStageIndex + 1;
       const newStage = GAME_STAGES[newStageIndex];
 
-      // Check if transitioning from COMBAT to non-COMBAT stage
       if (
         currentStage?.type === GAME_STAGE_TYPE.COMBAT &&
         newStage?.type !== GAME_STAGE_TYPE.COMBAT
@@ -81,7 +79,6 @@ export const AdminStageController = () => {
     if (game) {
       const newStage = GAME_STAGES[0];
 
-      // Check if transitioning from COMBAT to non-COMBAT stage
       if (
         currentStage?.type === GAME_STAGE_TYPE.COMBAT &&
         newStage?.type !== GAME_STAGE_TYPE.COMBAT
@@ -142,7 +139,7 @@ export const AdminStageController = () => {
               {currentStage.type === "combat" && (
                 <div className="text-sm">
                   傷害值：
-                  <span className="font-bold text-red-600">
+                  <span className="font-bold text-red-600 dark:text-red-400">
                     {currentStage.damage}
                   </span>
                 </div>
@@ -150,7 +147,7 @@ export const AdminStageController = () => {
               {currentStage.type === "discussion" && (
                 <div className="text-sm">
                   時間：
-                  <span className="font-bold text-blue-600">
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
                     {currentStage.duration} 分鐘
                   </span>
                 </div>

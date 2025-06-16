@@ -18,7 +18,6 @@ interface AdminCombatSelectorProps {
   allPlayers: { [key: string]: IPlayer };
 }
 
-// Chinese trait name mapping (same as in AdminTraitAssignment)
 const TRAIT_LABELS: Record<string, string> = {
   [EVOLUTION_TRAITS.GENE_MUTATION]: "基因突變",
   [EVOLUTION_TRAITS.DEADLY_POISON]: "劇毒",
@@ -36,7 +35,6 @@ const TRAIT_LABELS: Record<string, string> = {
   [EVOLUTION_TRAITS.SCAVENGER]: "食腐",
 };
 
-// Player type Chinese labels
 const PLAYER_TYPE_LABELS: Record<string, string> = {
   fire: "火",
   water: "水",
@@ -53,7 +51,6 @@ export const AdminCombatSelector = ({
   const [target, setTarget] = useState<IPlayer | null>(null);
   const [isResetting, setIsResetting] = useState(false);
 
-  // Sort players by their number property
   const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
 
   const canBeAttacker = (player: IPlayer) => !player.isResting;
@@ -111,7 +108,6 @@ export const AdminCombatSelector = ({
     setIsResetting(true);
 
     try {
-      // Create update promises for all players
       const updatePromises = Object.values(allPlayers).map(async (player) => {
         const updatePayload: Partial<IPlayer> = {
           hp: 25,
@@ -122,12 +118,8 @@ export const AdminCombatSelector = ({
         return updateData(`players/${player.id}`, updatePayload);
       });
 
-      // Execute all updates
       await Promise.all(updatePromises);
-
       toast.success(`已重置所有玩家的血量與戰鬥狀態`);
-
-      // Clear current selection
       handleReset();
     } catch (error) {
       toast.error("重置戰鬥狀態失敗");
@@ -163,27 +155,25 @@ export const AdminCombatSelector = ({
               "flex flex-col items-start justify-start py-4 px-4 min-h-[100px] text-left relative h-auto",
               isDisabled(player) && "opacity-50 cursor-not-allowed",
               attacker?.id === player.id &&
-                "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20",
+                "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:ring-blue-400",
               target?.id === player.id &&
-                "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20",
+                "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20 dark:ring-red-400",
               isSelected(player) && "font-bold",
             )}
           >
             <div className="w-full space-y-2">
-              {/* Player Name and Number */}
               <div className="flex items-center justify-between w-full">
                 <div className="text-sm font-semibold">
                   {player.number} {player.nickname}
                 </div>
                 {attacker?.id === player.id && (
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
                 )}
                 {target?.id === player.id && (
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
                 )}
               </div>
 
-              {/* HP and Type */}
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium">HP: {player.hp}</span>
                 <span className="text-muted-foreground">•</span>
@@ -196,7 +186,6 @@ export const AdminCombatSelector = ({
                 </span>
               </div>
 
-              {/* Evolution Traits */}
               {player.evolutionCards && player.evolutionCards.length > 0 && (
                 <div className="w-full">
                   <div className="flex flex-wrap gap-1">
@@ -213,15 +202,14 @@ export const AdminCombatSelector = ({
                 </div>
               )}
 
-              {/* Status Indicators */}
               <div className="flex gap-1 flex-wrap">
                 {player.isResting && (
-                  <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
+                  <span className="text-xs bg-yellow-100 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
                     回合結束
                   </span>
                 )}
                 {player.protected && (
-                  <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 px-2 py-1 rounded">
+                  <span className="text-xs bg-green-100 dark:bg-green-900/60 text-green-800 dark:text-green-300 px-2 py-1 rounded">
                     保護區
                   </span>
                 )}
@@ -236,7 +224,7 @@ export const AdminCombatSelector = ({
         <div className="bg-muted p-4 rounded-lg space-y-2">
           {attacker && (
             <div className="flex items-center gap-2 text-sm">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
               <span>
                 攻擊者：玩家 {attacker.number}（{attacker.nickname}）
               </span>
@@ -244,7 +232,7 @@ export const AdminCombatSelector = ({
           )}
           {target && (
             <div className="flex items-center gap-2 text-sm">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
               <span>
                 目標：玩家 {target.number}（{target.nickname}）
               </span>
@@ -255,7 +243,6 @@ export const AdminCombatSelector = ({
 
       {/* Action Buttons */}
       <div className="flex flex-col gap-3">
-        {/* Primary Combat Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={handleAttack}
@@ -277,7 +264,6 @@ export const AdminCombatSelector = ({
           </Button>
         </div>
 
-        {/* Reset Combat State Button */}
         <Button
           variant="destructive"
           onClick={handleResetAllCombatState}
@@ -287,7 +273,7 @@ export const AdminCombatSelector = ({
         >
           {isResetting ? (
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white dark:border-gray-300 border-t-transparent rounded-full animate-spin" />
               <span>重置中...</span>
             </div>
           ) : (
@@ -300,7 +286,7 @@ export const AdminCombatSelector = ({
       </div>
 
       {!isCombatStage && (
-        <div className="text-center text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
+        <div className="text-center text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
           <Zap className="h-4 w-4 inline mr-1" />
           當前不是戰鬥階段，無法執行攻擊
         </div>

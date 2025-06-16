@@ -56,12 +56,12 @@ export const AdminLogViewer = () => {
               return (
                 <div
                   key={log.id}
-                  className="border-l-4 border-purple-500 pl-3 py-3 bg-purple-50 dark:bg-purple-900/20 rounded-r-lg"
+                  className="border-l-4 border-purple-500 dark:border-purple-400 pl-3 py-3 bg-purple-50 dark:bg-purple-900/20 rounded-r-lg"
                 >
                   <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                     <Badge
                       variant="outline"
-                      className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300 w-fit text-xs"
+                      className="bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 w-fit text-xs border-purple-200 dark:border-purple-700"
                     >
                       性狀效果
                     </Badge>
@@ -79,7 +79,7 @@ export const AdminLogViewer = () => {
             return (
               <div
                 key={log.id}
-                className={`border-l-4 ${log.success ? "border-green-500" : "border-red-500"} pl-3 py-3 ${log.success ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"} rounded-r-lg`}
+                className={`border-l-4 ${log.success ? "border-green-500 dark:border-green-400" : "border-red-500 dark:border-red-400"} pl-3 py-3 ${log.success ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"} rounded-r-lg`}
               >
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                   <Badge
@@ -146,12 +146,12 @@ export const AdminLogViewer = () => {
             logs.map((log) => (
               <div
                 key={log.id}
-                className="border-l-4 border-blue-500 pl-3 py-3 bg-blue-50 dark:bg-blue-900/20 rounded-r-lg"
+                className="border-l-4 border-blue-500 dark:border-blue-400 pl-3 py-3 bg-blue-50 dark:bg-blue-900/20 rounded-r-lg"
               >
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                   <Badge
                     variant="outline"
-                    className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 w-fit text-xs"
+                    className="bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 w-fit text-xs border-blue-200 dark:border-blue-700"
                   >
                     交易
                   </Badge>

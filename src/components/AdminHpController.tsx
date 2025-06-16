@@ -12,7 +12,6 @@ interface AdminHpControllerProps {
   players: { [key: string]: IPlayer };
 }
 
-// Player type Chinese labels
 const PLAYER_TYPE_LABELS: Record<string, string> = {
   fire: "火",
   water: "水",
@@ -120,7 +119,7 @@ const PlayerHpEditor = ({
         <Button
           onClick={() => adjustHp(5)}
           variant="default"
-          className="min-h-[44px] text-sm bg-green-600 hover:bg-green-700"
+          className="min-h-[44px] text-sm bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
           size="lg"
         >
           <Plus className="h-4 w-4 mr-1" />5
