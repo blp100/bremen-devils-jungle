@@ -35,7 +35,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState("hp");
+  const [activeTab, setActiveTab] = useState("stage");
   const { data: game, loading: gameLoading } = useGame();
   const { data: players, loading: playersLoading } = usePlayers();
   const startGame = useStartGame();
@@ -141,6 +141,20 @@ const Admin = () => {
                       : "grid-cols-3"
                 }`}
               >
+                <TabsTrigger
+                  value="stage"
+                  className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
+                >
+                  <Clock className="h-4 w-4" />
+                  <span>階段</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="hp"
+                  className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
+                >
+                  <Heart className="h-4 w-4" />
+                  <span>血量</span>
+                </TabsTrigger>
                 {isCombatStage && (
                   <TabsTrigger
                     value="combat"
@@ -150,20 +164,6 @@ const Admin = () => {
                     <span>戰鬥</span>
                   </TabsTrigger>
                 )}
-                <TabsTrigger
-                  value="hp"
-                  className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
-                >
-                  <Heart className="h-4 w-4" />
-                  <span>血量</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="stage"
-                  className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
-                >
-                  <Clock className="h-4 w-4" />
-                  <span>階段</span>
-                </TabsTrigger>
                 {isEvolutionStage && (
                   <TabsTrigger
                     value="traits"
