@@ -12,8 +12,20 @@ interface AdminHpControllerProps {
   players: { [key: string]: IPlayer };
 }
 
+// Player type Chinese labels
+const PLAYER_TYPE_LABELS: Record<string, string> = {
+  fire: "火",
+  water: "水",
+  wood: "木",
+  electric: "電",
+};
+
 export const AdminHpController = ({ players }: AdminHpControllerProps) => {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+
+  const getPlayerTypeLabel = (type: string) => {
+    return PLAYER_TYPE_LABELS[type] || type;
+  };
 
   if (!selectedPlayerId) {
     return (
@@ -36,7 +48,8 @@ export const AdminHpController = ({ players }: AdminHpControllerProps) => {
                     {player.number} {player.nickname}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {player.type} • 元素 {player.elementCount}
+                    {getPlayerTypeLabel(player.type)} • 元素{" "}
+                    {player.elementCount}
                   </div>
                 </div>
                 <div className="text-right">

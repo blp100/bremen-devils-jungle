@@ -58,6 +58,14 @@ const TRAIT_LABELS: Record<string, string> = {
   [EVOLUTION_TRAITS.SCAVENGER]: "食腐",
 };
 
+// Player type Chinese labels
+const PLAYER_TYPE_LABELS: Record<string, string> = {
+  fire: "火",
+  water: "水",
+  wood: "木",
+  electric: "電",
+};
+
 export const AdminTraitAssignment = ({
   players,
   currentRound,
@@ -108,6 +116,10 @@ export const AdminTraitAssignment = ({
   };
 
   const availableTraits = getAvailableTraits(currentRound);
+
+  const getPlayerTypeLabel = (type: string) => {
+    return PLAYER_TYPE_LABELS[type] || type;
+  };
 
   // Create a map of which traits are already assigned to which players
   const assignedTraitsMap = useMemo(() => {
@@ -455,7 +467,7 @@ export const AdminTraitAssignment = ({
                             </span>
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {player.type} • HP: {player.hp}
+                            {getPlayerTypeLabel(player.type)} • HP: {player.hp}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
