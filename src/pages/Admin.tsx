@@ -35,7 +35,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState("combat");
+  const [activeTab, setActiveTab] = useState("hp");
   const { data: game, loading: gameLoading } = useGame();
   const { data: players, loading: playersLoading } = usePlayers();
   const startGame = useStartGame();
@@ -49,6 +49,7 @@ const Admin = () => {
   const currentStageIndex = game?.stageIndex ?? -1;
   const currentStage = GAME_STAGES[currentStageIndex] ?? -1;
   const isEvolutionStage = currentStage.type === GAME_STAGE_TYPE.EVOLUTION;
+  const isCombatStage = currentStage.type === GAME_STAGE_TYPE.COMBAT;
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,15 +133,23 @@ const Admin = () => {
             {/* Sticky Tab Bar for Mobile */}
             <div className="sticky top-[89px] sm:top-[97px] z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b mb-4 -mx-4 px-4 py-2">
               <TabsList
-                className={`grid w-full h-12 sm:h-10 ${isEvolutionStage ? "grid-cols-5" : "grid-cols-4"}`}
+                className={`grid w-full h-12 sm:h-10 ${
+                  isCombatStage && isEvolutionStage
+                    ? "grid-cols-5"
+                    : isCombatStage || isEvolutionStage
+                      ? "grid-cols-4"
+                      : "grid-cols-3"
+                }`}
               >
-                <TabsTrigger
-                  value="combat"
-                  className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
-                >
-                  <Activity className="h-4 w-4" />
-                  <span>戰鬥</span>
-                </TabsTrigger>
+                {isCombatStage && (
+                  <TabsTrigger
+                    value="combat"
+                    className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
+                  >
+                    <Activity className="h-4 w-4" />
+                    <span>戰鬥</span>
+                  </TabsTrigger>
+                )}
                 <TabsTrigger
                   value="hp"
                   className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
@@ -174,22 +183,26 @@ const Admin = () => {
               </TabsList>
             </div>
 
-            <TabsContent value="combat" className="mt-0">
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg sm:text-xl">戰鬥控制</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {players && game && (
-                    <AdminCombatSelector
-                      players={Object.values(players)}
-                      game={game}
-                      allPlayers={players}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+            {isCombatStage && (
+              <TabsContent value="combat" className="mt-0">
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg sm:text-xl">
+                      戰鬥控制
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {players && game && (
+                      <AdminCombatSelector
+                        players={Object.values(players)}
+                        game={game}
+                        allPlayers={players}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
 
             <TabsContent value="hp" className="mt-0">
               <Card>
