@@ -111,15 +111,21 @@ export const processCombatPhase = (
       ) {
         const minionResult = resolveDirectCombat(
           player,
-          target,
+          result.target,
           game.maxElementCount,
           game.damage,
           allPlayers,
+          true,
         );
+
         result.damageDealt += minionResult.damageDealt;
+        result.traitsTriggered.push(...minionResult.traitsTriggered);
         if (minionResult.success) {
-          attacker.hp += 3;
-          player.hp = Math.max(0, player.hp - 3);
+          result.attacker.hp += 3;
+          result.target.hp = minionResult.target.hp;
+          minionResult.attacker.hp = Math.max(0, minionResult.attacker.hp - 3);
+
+          allPlayers[minionResult.attacker.id] = { ...minionResult.attacker };
 
           triggerParasiticEffect(
             attacker,
@@ -169,6 +175,7 @@ const resolveDirectCombat = (
   maxElementCount: number,
   damage: number,
   allPlayers: { [key: string]: IPlayer },
+  ignoreProtection = false,
 ) => {
   const updatedAttacker = { ...attacker };
   const updatedTarget = { ...target };
@@ -184,7 +191,9 @@ const resolveDirectCombat = (
   );
   const evolutionValid = _canAttackBasedOnEvolutionCards(attacker, target);
 
-  const success = (elementValid || evolutionValid) && !updatedTarget.protected;
+  const success =
+    (elementValid || evolutionValid) &&
+    (ignoreProtection || !updatedTarget.protected);
 
   if (success) {
     updatedAttacker.hp += damage;
