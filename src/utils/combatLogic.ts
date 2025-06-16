@@ -95,6 +95,7 @@ export const processCombatPhase = (
     game.maxElementCount,
     game.damage,
     allPlayers,
+    game,
   );
 
   // Reactive traits
@@ -115,7 +116,7 @@ export const processCombatPhase = (
           game.maxElementCount,
           game.damage,
           allPlayers,
-          true,
+          game,
         );
 
         result.damageDealt += minionResult.damageDealt;
@@ -175,7 +176,7 @@ const resolveDirectCombat = (
   maxElementCount: number,
   damage: number,
   allPlayers: { [key: string]: IPlayer },
-  ignoreProtection = false,
+  game: IGame,
 ) => {
   const updatedAttacker = { ...attacker };
   const updatedTarget = { ...target };
@@ -191,16 +192,14 @@ const resolveDirectCombat = (
   );
   const evolutionValid = _canAttackBasedOnEvolutionCards(attacker, target);
 
-  const success =
-    (elementValid || evolutionValid) &&
-    (ignoreProtection || !updatedTarget.protected);
+  const success = (elementValid || evolutionValid) && !updatedTarget.protected;
 
   if (success) {
     updatedAttacker.hp += damage;
     updatedAttacker.isResting = true;
 
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
-    updatedTarget.protected = true;
+    updatedTarget.protected = game.round === undefined || game.round <= 3;
 
     applyAfterCombatEffects(
       updatedAttacker,
