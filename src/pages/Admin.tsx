@@ -24,13 +24,13 @@ import { AdminMenu } from "@/components/AdminMenu";
 import { Separator } from "@/components/ui/separator";
 import {
   AlertCircle,
-  Activity,
   Heart,
   Clock,
   FileText,
   Plus,
   Play,
   Zap,
+  Swords,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -160,7 +160,7 @@ const Admin = () => {
                     value="combat"
                     className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
                   >
-                    <Activity className="h-4 w-4" />
+                    <Swords className="h-4 w-4" />
                     <span>戰鬥</span>
                   </TabsTrigger>
                 )}
