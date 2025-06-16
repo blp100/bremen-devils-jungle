@@ -25,6 +25,8 @@ import {
   AlertCircle,
   Heart,
   ArrowRight,
+  Crown,
+  Bug,
 } from "lucide-react";
 import {
   Tooltip,
@@ -70,6 +72,9 @@ export const AdminTraitAssignment = ({
     [playerId: string]: boolean;
   }>({});
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
+  const [targetPlayers, setTargetPlayers] = useState<{
+    [playerId: string]: string;
+  }>({});
 
   // Get available traits based on current round
   const getAvailableTraits = (round: number) => {
@@ -138,12 +143,20 @@ export const AdminTraitAssignment = ({
     return playerId ? players[playerId] : null;
   };
 
+  // Check if a trait requires a target player
+  const traitRequiresTarget = (trait: string): boolean => {
+    return (
+      trait === EVOLUTION_TRAITS.LION_KING ||
+      trait === EVOLUTION_TRAITS.PARASITIC
+    );
+  };
+
   const handlePlayerClick = (playerId: string) => {
     if (expandedPlayer === playerId) {
       setExpandedPlayer(null);
     } else {
       setExpandedPlayer(playerId);
-      // Clear any selected trait and HP deduction when switching players
+      // Clear any selected trait, HP deduction, and target player when switching players
       if (selectedTraits[playerId]) {
         setSelectedTraits((prev) => {
           const updated = { ...prev };
@@ -153,6 +166,13 @@ export const AdminTraitAssignment = ({
       }
       if (hpDeductions[playerId] !== undefined) {
         setHpDeductions((prev) => {
+          const updated = { ...prev };
+          delete updated[playerId];
+          return updated;
+        });
+      }
+      if (targetPlayers[playerId] !== undefined) {
+        setTargetPlayers((prev) => {
           const updated = { ...prev };
           delete updated[playerId];
           return updated;
@@ -171,6 +191,22 @@ export const AdminTraitAssignment = ({
       ...prev,
       [playerId]: 0,
     }));
+    // Reset target player when trait changes
+    setTargetPlayers((prev) => {
+      const updated = { ...prev };
+      delete updated[playerId];
+      return updated;
+    });
+  };
+
+  const handleTargetPlayerSelect = (
+    playerId: string,
+    targetPlayerId: string,
+  ) => {
+    setTargetPlayers((prev) => ({
+      ...prev,
+      [playerId]: targetPlayerId,
+    }));
   };
 
   const handleHpDeductionChange = (playerId: string, value: number) => {
@@ -188,6 +224,7 @@ export const AdminTraitAssignment = ({
   const handleAssignTrait = async (playerId: string) => {
     const selectedTrait = selectedTraits[playerId];
     const hpDeduction = hpDeductions[playerId] || 0;
+    const targetPlayerId = targetPlayers[playerId];
 
     if (!selectedTrait) {
       toast.error("請先選擇一個特性");
@@ -217,6 +254,12 @@ export const AdminTraitAssignment = ({
       return;
     }
 
+    // Check if target player is required but not selected
+    if (traitRequiresTarget(selectedTrait) && !targetPlayerId) {
+      toast.error(`${TRAIT_LABELS[selectedTrait]} 特性需要選擇目標玩家`);
+      return;
+    }
+
     setAssigningTraits((prev) => ({ ...prev, [playerId]: true }));
 
     try {
@@ -224,23 +267,41 @@ export const AdminTraitAssignment = ({
       const updatedTraits = [...currentTraits, selectedTrait];
       const newHp = Math.max(0, player.hp - hpDeduction);
 
-      await updateData(`players/${playerId}`, {
+      // Prepare update data
+      const updatePayload: Partial<IPlayer> = {
         evolutionCards: updatedTraits,
         hp: newHp,
-      });
+      };
+
+      // Add target player ID for special traits
+      if (selectedTrait === EVOLUTION_TRAITS.LION_KING) {
+        updatePayload.minionId = targetPlayerId;
+      } else if (selectedTrait === EVOLUTION_TRAITS.PARASITIC) {
+        updatePayload.parasiticTargetId = targetPlayerId;
+      }
+
+      await updateData(`players/${playerId}`, updatePayload);
 
       const hpMessage = hpDeduction > 0 ? ` 並扣除 ${hpDeduction} 點血量` : "";
+      const targetMessage = targetPlayerId
+        ? ` 目標為 ${players[targetPlayerId].nickname}`
+        : "";
       toast.success(
-        `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 特性${hpMessage}`,
+        `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 特性${hpMessage}${targetMessage}`,
       );
 
-      // Clear the selected trait, HP deduction and collapse the player
+      // Clear the selected trait, HP deduction, target player and collapse the player
       setSelectedTraits((prev) => {
         const updated = { ...prev };
         delete updated[playerId];
         return updated;
       });
       setHpDeductions((prev) => {
+        const updated = { ...prev };
+        delete updated[playerId];
+        return updated;
+      });
+      setTargetPlayers((prev) => {
         const updated = { ...prev };
         delete updated[playerId];
         return updated;
@@ -278,6 +339,17 @@ export const AdminTraitAssignment = ({
 
   const getTraitLabel = (trait: string) => {
     return TRAIT_LABELS[trait] || trait;
+  };
+
+  const getTraitIcon = (trait: string) => {
+    switch (trait) {
+      case EVOLUTION_TRAITS.LION_KING:
+        return <Crown className="h-4 w-4 mr-1" />;
+      case EVOLUTION_TRAITS.PARASITIC:
+        return <Bug className="h-4 w-4 mr-1" />;
+      default:
+        return <Zap className="h-4 w-4 mr-1" />;
+    }
   };
 
   const playerList = Object.values(players).sort((a, b) => a.number - b.number);
@@ -319,6 +391,12 @@ export const AdminTraitAssignment = ({
                 const selectedTrait = selectedTraits[player.id];
                 const hpDeduction = hpDeductions[player.id] || 0;
                 const resultingHp = player.hp - hpDeduction;
+                const needsTarget =
+                  !!selectedTrait && traitRequiresTarget(selectedTrait);
+                const targetPlayerId = targetPlayers[player.id];
+                const targetPlayer = targetPlayerId
+                  ? players[targetPlayerId]
+                  : null;
 
                 return (
                   <div
@@ -383,6 +461,29 @@ export const AdminTraitAssignment = ({
                             </div>
                           </div>
                         )}
+
+                      {/* Special Trait Targets - Always Visible */}
+                      <div className="mt-3 space-y-1">
+                        {player.minionId && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Crown className="h-3 w-3" />
+                            <span>
+                              手下：
+                              {players[player.minionId]?.nickname || "未知玩家"}
+                            </span>
+                          </div>
+                        )}
+                        {player.parasiticTargetId && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Bug className="h-3 w-3" />
+                            <span>
+                              寄生目標：
+                              {players[player.parasiticTargetId]?.nickname ||
+                                "未知玩家"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Expanded Content - Trait Assignment */}
@@ -427,9 +528,12 @@ export const AdminTraitAssignment = ({
                                     >
                                       <div className="flex items-center justify-between w-full">
                                         <div className="flex flex-col">
-                                          <span className="font-medium">
-                                            {getTraitLabel(trait)}
-                                          </span>
+                                          <div className="flex items-center">
+                                            {getTraitIcon(trait)}
+                                            <span className="font-medium">
+                                              {getTraitLabel(trait)}
+                                            </span>
+                                          </div>
                                           <span className="text-xs text-muted-foreground">
                                             {getTraitDescription(trait)}
                                           </span>
@@ -470,9 +574,86 @@ export const AdminTraitAssignment = ({
                               </SelectContent>
                             </Select>
 
+                            {/* Target Player Selection - Only for LION_KING and PARASITIC */}
+                            {needsTarget && (
+                              <div className="space-y-3 mt-4">
+                                <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                                  {selectedTrait ===
+                                  EVOLUTION_TRAITS.LION_KING ? (
+                                    <>
+                                      <Crown className="h-4 w-4" />
+                                      選擇手下：
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Bug className="h-4 w-4" />
+                                      選擇寄生目標：
+                                    </>
+                                  )}
+                                </div>
+
+                                <Select
+                                  value={targetPlayers[player.id] || ""}
+                                  onValueChange={(value) =>
+                                    handleTargetPlayerSelect(player.id, value)
+                                  }
+                                >
+                                  <SelectTrigger className="min-h-[44px]">
+                                    <SelectValue placeholder="選擇目標玩家..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {playerList
+                                      .filter(
+                                        (p) => p.id !== player.id && p.hp > 0,
+                                      )
+                                      .map((targetPlayer) => (
+                                        <SelectItem
+                                          key={targetPlayer.id}
+                                          value={targetPlayer.id}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-medium">
+                                              {targetPlayer.number}{" "}
+                                              {targetPlayer.nickname}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                              ({targetPlayer.type} • HP:{" "}
+                                              {targetPlayer.hp})
+                                            </span>
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+
+                                {targetPlayer && (
+                                  <div className="text-sm bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+                                    <div className="flex items-center gap-2">
+                                      {selectedTrait ===
+                                      EVOLUTION_TRAITS.LION_KING ? (
+                                        <Crown className="h-4 w-4 text-amber-500" />
+                                      ) : (
+                                        <Bug className="h-4 w-4 text-green-600" />
+                                      )}
+                                      <span className="font-medium">
+                                        已選擇：{targetPlayer.number}{" "}
+                                        {targetPlayer.nickname}
+                                      </span>
+                                    </div>
+                                    <div className="mt-1 text-xs text-muted-foreground">
+                                      {selectedTrait ===
+                                      EVOLUTION_TRAITS.LION_KING
+                                        ? "此玩家將成為你的手下，你攻擊時他也會攻擊同一目標"
+                                        : "當此玩家獲得血量時，你也會獲得相同血量"}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
                             {/* HP Deduction Input - Only show when trait is selected */}
                             {selectedTrait && (
-                              <div className="space-y-3">
+                              <div className="space-y-3 mt-4">
                                 <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                   <Heart className="h-4 w-4" />
                                   血量扣除：
@@ -554,9 +735,11 @@ export const AdminTraitAssignment = ({
                             <Button
                               onClick={() => handleAssignTrait(player.id)}
                               disabled={
-                                !selectedTraits[player.id] || isAssigning
+                                !selectedTraits[player.id] ||
+                                isAssigning ||
+                                (needsTarget && !targetPlayers[player.id])
                               }
-                              className="w-full min-h-[44px]"
+                              className="w-full min-h-[44px] mt-4"
                               size="lg"
                             >
                               {isAssigning ? (
@@ -572,6 +755,8 @@ export const AdminTraitAssignment = ({
                                     {selectedTrait &&
                                       hpDeduction > 0 &&
                                       ` (扣除 ${hpDeduction} HP)`}
+                                    {targetPlayer &&
+                                      ` (目標: ${targetPlayer.nickname})`}
                                   </span>
                                 </div>
                               )}
