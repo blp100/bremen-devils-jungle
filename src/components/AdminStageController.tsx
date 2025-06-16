@@ -98,13 +98,13 @@ export const AdminStageController = () => {
   const getStageIcon = (stageType: string) => {
     switch (stageType) {
       case "discussion":
-        return <Clock className="h-5 w-5" />;
+        return <Clock className="h-4 w-4" />;
       case "combat":
-        return <Swords className="h-5 w-5" />;
+        return <Swords className="h-4 w-4" />;
       case "evolution":
-        return <Zap className="h-5 w-5" />;
+        return <Zap className="h-4 w-4" />;
       default:
-        return <Clock className="h-5 w-5" />;
+        return <Clock className="h-4 w-4" />;
     }
   };
 
@@ -199,30 +199,30 @@ export const AdminStageController = () => {
         <Button
           onClick={handlePreviousStage}
           disabled={isFirstStage}
-          className="min-h-[48px] text-base"
+          className="min-h-[44px] text-sm"
           size="lg"
         >
-          <ChevronLeft className="h-5 w-5 mr-2" />
+          <ChevronLeft className="h-4 w-4 mr-2" />
           {isFirstStage ? "遊戲剛開始" : "回到上一階段"}
         </Button>
 
         <Button
           onClick={handleNextStage}
           disabled={isLastStage}
-          className="min-h-[48px] text-base"
+          className="min-h-[44px] text-sm"
           size="lg"
         >
-          <ChevronRight className="h-5 w-5 mr-2" />
+          <ChevronRight className="h-4 w-4 mr-2" />
           {isLastStage ? "遊戲已結束" : "進入下一階段"}
         </Button>
 
         <Button
           variant="outline"
           onClick={handleResetStage}
-          className="min-h-[48px] text-base"
+          className="min-h-[44px] text-sm"
           size="lg"
         >
-          <RotateCcw className="h-5 w-5 mr-2" />
+          <RotateCcw className="h-4 w-4 mr-2" />
           回到第一階段
         </Button>
       </div>

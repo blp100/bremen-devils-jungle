@@ -172,7 +172,7 @@ export const AdminCombatSelector = ({
             <div className="w-full space-y-2">
               {/* Player Name and Number */}
               <div className="flex items-center justify-between w-full">
-                <div className="text-base font-semibold">
+                <div className="text-sm font-semibold">
                   {player.number} {player.nickname}
                 </div>
                 {attacker?.id === player.id && (
@@ -260,19 +260,19 @@ export const AdminCombatSelector = ({
           <Button
             onClick={handleAttack}
             disabled={!attacker || !target || !isCombatStage}
-            className="flex-1 min-h-[48px] text-base"
+            className="flex-1 min-h-[44px] text-sm"
             size="lg"
           >
-            <Swords className="h-5 w-5 mr-2" />
+            <Swords className="h-4 w-4 mr-2" />
             執行攻擊
           </Button>
           <Button
             variant="outline"
             onClick={handleReset}
-            className="flex-1 sm:flex-none min-h-[48px] text-base"
+            className="flex-1 sm:flex-none min-h-[44px] text-sm"
             size="lg"
           >
-            <RotateCcw className="h-5 w-5 mr-2" />
+            <RotateCcw className="h-4 w-4 mr-2" />
             重新選擇
           </Button>
         </div>
@@ -282,7 +282,7 @@ export const AdminCombatSelector = ({
           variant="destructive"
           onClick={handleResetAllCombatState}
           disabled={isResetting}
-          className="w-full min-h-[48px] text-base"
+          className="w-full min-h-[44px] text-sm"
           size="lg"
         >
           {isResetting ? (
@@ -292,7 +292,7 @@ export const AdminCombatSelector = ({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <RefreshCw className="h-5 w-5" />
+              <RefreshCw className="h-4 w-4" />
               <span>重置血量與戰鬥狀態</span>
             </div>
           )}

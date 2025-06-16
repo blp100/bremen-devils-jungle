@@ -44,7 +44,7 @@ export const AdminHpController = ({ players }: AdminHpControllerProps) => {
                 className="flex justify-between items-center p-4 h-auto min-h-[60px]"
               >
                 <div className="text-left">
-                  <div className="font-semibold text-base">
+                  <div className="text-sm font-semibold">
                     {player.number} {player.nickname}
                   </div>
                   <div className="text-sm text-muted-foreground">
@@ -112,34 +112,34 @@ const PlayerHpEditor = ({
         <Button
           onClick={() => adjustHp(-5)}
           variant="destructive"
-          className="min-h-[48px] text-base"
+          className="min-h-[44px] text-sm"
           size="lg"
         >
-          <Minus className="h-5 w-5 mr-1" />5
+          <Minus className="h-4 w-4 mr-1" />5
         </Button>
         <Button
           onClick={() => adjustHp(5)}
           variant="default"
-          className="min-h-[48px] text-base bg-green-600 hover:bg-green-700"
+          className="min-h-[44px] text-sm bg-green-600 hover:bg-green-700"
           size="lg"
         >
-          <Plus className="h-5 w-5 mr-1" />5
+          <Plus className="h-4 w-4 mr-1" />5
         </Button>
         <Button
           onClick={() => adjustHp(-1)}
           variant="outline"
-          className="min-h-[48px] text-base"
+          className="min-h-[44px] text-sm"
           size="lg"
         >
-          <Minus className="h-5 w-5 mr-1" />1
+          <Minus className="h-4 w-4 mr-1" />1
         </Button>
         <Button
           onClick={() => adjustHp(1)}
           variant="outline"
-          className="min-h-[48px] text-base"
+          className="min-h-[44px] text-sm"
           size="lg"
         >
-          <Plus className="h-5 w-5 mr-1" />1
+          <Plus className="h-4 w-4 mr-1" />1
         </Button>
       </div>
 
@@ -159,19 +159,19 @@ const PlayerHpEditor = ({
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
           onClick={updateHp}
-          className="flex-1 min-h-[48px] text-base"
+          className="flex-1 min-h-[44px] text-sm"
           size="lg"
         >
-          <Check className="h-5 w-5 mr-2" />
+          <Check className="h-4 w-4 mr-2" />
           更新血量
         </Button>
         <Button
           variant="outline"
           onClick={onBack}
-          className="flex-1 sm:flex-none min-h-[48px] text-base"
+          className="flex-1 sm:flex-none min-h-[44px] text-sm"
           size="lg"
         >
-          <ArrowLeft className="h-5 w-5 mr-2" />
+          <ArrowLeft className="h-4 w-4 mr-2" />
           返回
         </Button>
       </div>

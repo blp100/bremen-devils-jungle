@@ -65,7 +65,7 @@ export const AdminMenu = () => {
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
-          <Menu className="h-5 w-5" />
+          <Menu className="h-4 w-4" />
           <span className="sr-only">開啟選單</span>
         </Button>
       </DropdownMenuTrigger>
