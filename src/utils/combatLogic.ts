@@ -178,6 +178,7 @@ const resolveDirectCombat = (
   allPlayers: { [key: string]: IPlayer },
   game: IGame,
 ) => {
+  const playerCount = Object.keys(allPlayers).length;
   const updatedAttacker = { ...attacker };
   const updatedTarget = { ...target };
 
@@ -189,6 +190,7 @@ const resolveDirectCombat = (
     attacker,
     target,
     maxElementCount,
+    playerCount,
   );
   const evolutionValid = _canAttackBasedOnEvolutionCards(attacker, target);
 
@@ -246,6 +248,7 @@ const _canAttackBasedOnElement = (
   attacker: IPlayer,
   target: IPlayer,
   maxElementCount: number,
+  playerCount: number,
 ) => {
   if (FAILED_ATTACK_MAP[attacker.type] === target.type) return false;
 
@@ -254,6 +257,7 @@ const _canAttackBasedOnElement = (
       attacker.elementCount,
       target.elementCount,
       maxElementCount,
+      playerCount,
     );
   }
 
@@ -264,11 +268,13 @@ const _canAttackBasedOnElementCount = (
   attackerElementCount: number,
   targetElementCount: number,
   maxElementCount: number,
+  playerCount?: number,
 ) => {
-  if ((attackerElementCount % maxElementCount) + 1 === targetElementCount) {
-    return false;
+  if (playerCount === 12) {
+    return (attackerElementCount % maxElementCount) + 1 !== targetElementCount;
+  } else {
+    return attackerElementCount - 1 === targetElementCount % maxElementCount;
   }
-  return true;
 };
 
 const _canAttackBasedOnEvolutionCards = (
