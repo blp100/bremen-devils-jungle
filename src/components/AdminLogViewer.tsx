@@ -19,12 +19,12 @@ export const AdminLogViewer = () => {
   );
   const { data: players } = usePlayers();
 
-  const getPlayerName = (playerId) => {
+  const getPlayerName = (playerId: string) => {
     if (!players || !players[playerId]) return `玩家 ${playerId}`;
     return `${players[playerId].number} ${players[playerId].nickname}`;
   };
 
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = (timestamp: string) => {
     if (!timestamp) return "";
     const date = new Date(timestamp);
     return date.toLocaleTimeString("zh-TW", {
@@ -83,7 +83,7 @@ export const AdminLogViewer = () => {
               >
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                   <Badge
-                    variant={log.success ? "success" : "destructive"}
+                    variant={log.success ? "default" : "destructive"}
                     className="w-fit text-xs"
                   >
                     {log.success ? "攻擊成功" : "攻擊失敗"}
