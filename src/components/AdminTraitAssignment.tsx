@@ -663,8 +663,11 @@ export const AdminTraitAssignment = ({
                                               {targetPlayer.nickname}
                                             </span>
                                             <span className="text-xs text-muted-foreground">
-                                              ({targetPlayer.type} • HP:{" "}
-                                              {targetPlayer.hp})
+                                              (
+                                              {getPlayerTypeLabel(
+                                                targetPlayer.type,
+                                              )}{" "}
+                                              • HP: {targetPlayer.hp})
                                             </span>
                                           </div>
                                         </SelectItem>
