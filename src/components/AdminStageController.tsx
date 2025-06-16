@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { DB_PATH, GAME_STAGES } from "@/constants";
-import { useGame } from "@/utils";
+import { DB_PATH, GAME_STAGES, GAME_STAGE_TYPE } from "@/constants";
+import { useGame, usePlayers } from "@/utils";
 import { updateData } from "@/services/firebaseHelpers";
 import {
   ChevronRight,
@@ -10,9 +12,11 @@ import {
   Zap,
   ChevronLeft,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export const AdminStageController = () => {
   const { data: game } = useGame();
+  const { data: players } = usePlayers();
 
   const currentStageIndex = game?.stageIndex ?? -1;
   const currentStage = GAME_STAGES[currentStageIndex];
@@ -20,24 +24,71 @@ export const AdminStageController = () => {
   const isLastStage = currentStageIndex >= GAME_STAGES.length - 1;
   const isFirstStage = currentStageIndex <= 0;
 
+  const clearCombatStates = async () => {
+    if (!players) return;
+
+    const updatePromises = Object.values(players).map(async (player) => {
+      const updatePayload = {
+        protected: false,
+        isResting: false,
+      };
+      return updateData(`${DB_PATH.PLAYERS}/${player.id}`, updatePayload);
+    });
+
+    await Promise.all(updatePromises);
+    toast.success("已清除所有玩家的戰鬥狀態");
+  };
+
   const handlePreviousStage = async () => {
-    if (game && !isLastStage) {
+    if (game && !isFirstStage) {
+      const newStageIndex = currentStageIndex - 1;
+      const newStage = GAME_STAGES[newStageIndex];
+
+      // Check if transitioning from COMBAT to non-COMBAT stage
+      if (
+        currentStage?.type === GAME_STAGE_TYPE.COMBAT &&
+        newStage?.type !== GAME_STAGE_TYPE.COMBAT
+      ) {
+        await clearCombatStates();
+      }
+
       await updateData(DB_PATH.GAME, {
-        stageIndex: currentStageIndex - 1,
+        stageIndex: newStageIndex,
       });
     }
   };
 
   const handleNextStage = async () => {
     if (game && !isLastStage) {
+      const newStageIndex = currentStageIndex + 1;
+      const newStage = GAME_STAGES[newStageIndex];
+
+      // Check if transitioning from COMBAT to non-COMBAT stage
+      if (
+        currentStage?.type === GAME_STAGE_TYPE.COMBAT &&
+        newStage?.type !== GAME_STAGE_TYPE.COMBAT
+      ) {
+        await clearCombatStates();
+      }
+
       await updateData(DB_PATH.GAME, {
-        stageIndex: currentStageIndex + 1,
+        stageIndex: newStageIndex,
       });
     }
   };
 
   const handleResetStage = async () => {
     if (game) {
+      const newStage = GAME_STAGES[0];
+
+      // Check if transitioning from COMBAT to non-COMBAT stage
+      if (
+        currentStage?.type === GAME_STAGE_TYPE.COMBAT &&
+        newStage?.type !== GAME_STAGE_TYPE.COMBAT
+      ) {
+        await clearCombatStates();
+      }
+
       await updateData(DB_PATH.GAME, {
         stageIndex: 0,
       });
@@ -126,6 +177,19 @@ export const AdminStageController = () => {
               {nextStage.type === "discussion" &&
                 ` • ${nextStage.duration} 分鐘`}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Combat State Warning */}
+      {currentStage?.type === GAME_STAGE_TYPE.COMBAT && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+            <Swords className="h-4 w-4" />
+            <span className="text-sm font-medium">戰鬥階段提醒</span>
+          </div>
+          <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+            離開戰鬥階段時，所有玩家的保護狀態和回合結束狀態將被自動清除
           </div>
         </div>
       )}
