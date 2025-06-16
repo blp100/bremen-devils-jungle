@@ -54,8 +54,6 @@ export const AdminMenu = () => {
     switch (theme) {
       case "light":
         return "切換至深色模式";
-      case "dark":
-        return "切換至系統模式";
       default:
         return "切換至淺色模式";
     }
