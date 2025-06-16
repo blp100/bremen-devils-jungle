@@ -104,11 +104,18 @@ const getRandomPlayerAttributeList = (playerCount: number) => {
 
   shuffle(elementList);
 
+  let initialHp = 25;
+  if (playerCount === 12) {
+    initialHp = 23;
+  } else if (playerCount === 10 || playerCount === 11) {
+    initialHp = 20;
+  }
+
   for (let i = 0; i < playerCount; i++) {
     result.push({
       ...elementList[i],
       number: i + 1,
-      hp: 25,
+      hp: initialHp,
     });
   }
 
