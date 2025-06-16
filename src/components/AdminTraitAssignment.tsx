@@ -260,12 +260,24 @@ export const AdminTraitAssignment = ({
       return;
     }
 
+    // Apply GENETIC_MUTATION effect if player already has it and there's HP deduction
+    let finalHpDeduction = hpDeduction;
+    let geneticMutationReduction = 0;
+
+    if (
+      hpDeduction > 0 &&
+      player.evolutionCards?.includes(EVOLUTION_TRAITS.GENE_MUTATION)
+    ) {
+      geneticMutationReduction = Math.min(3, hpDeduction);
+      finalHpDeduction = Math.max(0, hpDeduction - 3);
+    }
+
     setAssigningTraits((prev) => ({ ...prev, [playerId]: true }));
 
     try {
       const currentTraits = player.evolutionCards || [];
       const updatedTraits = [...currentTraits, selectedTrait];
-      const newHp = Math.max(0, player.hp - hpDeduction);
+      const newHp = Math.max(0, player.hp - finalHpDeduction);
 
       // Prepare update data
       const updatePayload: Partial<IPlayer> = {
@@ -282,13 +294,22 @@ export const AdminTraitAssignment = ({
 
       await updateData(`players/${playerId}`, updatePayload);
 
-      const hpMessage = hpDeduction > 0 ? ` 並扣除 ${hpDeduction} 點血量` : "";
-      const targetMessage = targetPlayerId
-        ? ` 目標為 ${players[targetPlayerId].nickname}`
-        : "";
-      toast.success(
-        `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 特性${hpMessage}${targetMessage}`,
-      );
+      // Create success message
+      let message = `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 特性`;
+
+      if (finalHpDeduction > 0) {
+        message += ` 並扣除 ${finalHpDeduction} 點血量`;
+      }
+
+      if (geneticMutationReduction > 0) {
+        message += `（基因突變減少 ${geneticMutationReduction} 點傷害）`;
+      }
+
+      if (targetPlayerId) {
+        message += ` 目標為 ${players[targetPlayerId].nickname}`;
+      }
+
+      toast.success(message);
 
       // Clear the selected trait, HP deduction, target player and collapse the player
       setSelectedTraits((prev) => {
@@ -390,13 +411,26 @@ export const AdminTraitAssignment = ({
                 const isAssigning = assigningTraits[player.id];
                 const selectedTrait = selectedTraits[player.id];
                 const hpDeduction = hpDeductions[player.id] || 0;
-                const resultingHp = player.hp - hpDeduction;
                 const needsTarget =
                   !!selectedTrait && traitRequiresTarget(selectedTrait);
                 const targetPlayerId = targetPlayers[player.id];
                 const targetPlayer = targetPlayerId
                   ? players[targetPlayerId]
                   : null;
+
+                // Calculate final HP deduction with GENETIC_MUTATION effect
+                let finalHpDeduction = hpDeduction;
+                let geneticMutationReduction = 0;
+                const hasGeneticMutation = player.evolutionCards?.includes(
+                  EVOLUTION_TRAITS.GENE_MUTATION,
+                );
+
+                if (hpDeduction > 0 && hasGeneticMutation) {
+                  geneticMutationReduction = Math.min(3, hpDeduction);
+                  finalHpDeduction = Math.max(0, hpDeduction - 3);
+                }
+
+                const resultingHp = player.hp - finalHpDeduction;
 
                 return (
                   <div
@@ -709,7 +743,7 @@ export const AdminTraitAssignment = ({
                                   </Button>
                                 </div>
 
-                                {/* HP Preview */}
+                                {/* HP Preview with GENETIC_MUTATION effect */}
                                 <div className="flex items-center gap-2 text-sm bg-muted/50 p-3 rounded border">
                                   <Heart className="h-4 w-4 text-red-500" />
                                   <span className="font-medium">
@@ -718,16 +752,39 @@ export const AdminTraitAssignment = ({
                                   <span className="font-mono">{player.hp}</span>
                                   <ArrowRight className="h-4 w-4 text-muted-foreground" />
                                   <span
-                                    className={`font-mono font-bold ${resultingHp === 0 ? "text-red-600" : resultingHp < player.hp ? "text-orange-600" : "text-foreground"}`}
+                                    className={`font-mono font-bold ${
+                                      resultingHp === 0
+                                        ? "text-red-600"
+                                        : resultingHp < player.hp
+                                          ? "text-orange-600"
+                                          : "text-foreground"
+                                    }`}
                                   >
                                     {resultingHp}
                                   </span>
-                                  {hpDeduction > 0 && (
+                                  {finalHpDeduction > 0 && (
                                     <span className="text-xs text-muted-foreground ml-2">
-                                      (-{hpDeduction})
+                                      (-{finalHpDeduction})
                                     </span>
                                   )}
                                 </div>
+
+                                {/* GENETIC_MUTATION effect indicator */}
+                                {hasGeneticMutation && hpDeduction > 0 && (
+                                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                                    <div className="flex items-center gap-2 text-purple-800 dark:text-purple-300">
+                                      <Zap className="h-4 w-4" />
+                                      <span className="text-sm font-medium">
+                                        基因突變效果
+                                      </span>
+                                    </div>
+                                    <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                                      特性分配時傷害減少{" "}
+                                      {geneticMutationReduction} 點 （原本{" "}
+                                      {hpDeduction} → 實際 {finalHpDeduction}）
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
 
@@ -753,8 +810,8 @@ export const AdminTraitAssignment = ({
                                   <span>
                                     確認分配特性
                                     {selectedTrait &&
-                                      hpDeduction > 0 &&
-                                      ` (扣除 ${hpDeduction} HP)`}
+                                      finalHpDeduction > 0 &&
+                                      ` (扣除 ${finalHpDeduction} HP)`}
                                     {targetPlayer &&
                                       ` (目標: ${targetPlayer.nickname})`}
                                   </span>
