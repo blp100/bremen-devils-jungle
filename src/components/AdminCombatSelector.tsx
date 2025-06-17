@@ -10,7 +10,14 @@ import { handlePlayerAttack } from "@/services/combatServices";
 import type { IGame } from "@/interfaces";
 import { GAME_STAGE_TYPE, GAME_STAGES, EVOLUTION_TRAITS } from "@/constants";
 import { updateData } from "@/services/firebaseHelpers";
-import { Swords, RotateCcw, Zap, RefreshCw, Heart } from "lucide-react";
+import {
+  Swords,
+  RotateCcw,
+  Zap,
+  RefreshCw,
+  Heart,
+  SkipForward,
+} from "lucide-react";
 
 interface AdminCombatSelectorProps {
   players: IPlayer[];
@@ -50,10 +57,12 @@ export const AdminCombatSelector = ({
   const [attacker, setAttacker] = useState<IPlayer | null>(null);
   const [target, setTarget] = useState<IPlayer | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+  const [isPassing, setIsPassing] = useState(false);
 
   const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
 
-  const canBeAttacker = (player: IPlayer) => !player.isResting;
+  const canBeAttacker = (player: IPlayer) =>
+    !(player.isPassed && player.isResting);
   const canBeTarget = (player: IPlayer) => !player.protected;
   const isDisabled = (player: IPlayer) => {
     if (!attacker) return !canBeAttacker(player);
@@ -62,6 +71,10 @@ export const AdminCombatSelector = ({
   };
   const isCombatStage =
     GAME_STAGES[game.stageIndex]?.type === GAME_STAGE_TYPE.COMBAT;
+
+  const currentStage = GAME_STAGES[game.stageIndex];
+  const currentStageDamage =
+    currentStage.type === GAME_STAGE_TYPE.COMBAT && currentStage.damage;
 
   const handleSelectPlayer = (player: IPlayer) => {
     if (!attacker && canBeAttacker(player)) {
@@ -104,26 +117,63 @@ export const AdminCombatSelector = ({
     }
   };
 
+  const handlePass = async () => {
+    if (!attacker) return;
+
+    setIsPassing(true);
+    try {
+      const hasAlreadyPassed = attacker.isPassed;
+
+      const updatePayload: Partial<IPlayer> = {
+        isPassed: true,
+      };
+
+      let toastMessage = `${attacker.nickname} 已跳過此回合`;
+
+      // If player has already passed, apply damage penalty first
+      if (hasAlreadyPassed && currentStage?.type === GAME_STAGE_TYPE.COMBAT) {
+        const damage = currentStage.damage;
+        const newHp = Math.max(0, attacker.hp - damage);
+        updatePayload.isResting = true;
+        updatePayload.hp = newHp;
+        toastMessage = `${attacker.nickname} 再次跳過並受到 ${damage} 點傷害懲罰`;
+      }
+
+      await updateData(`players/${attacker.id}`, updatePayload);
+      toast.success(toastMessage);
+      handleReset();
+    } catch (error) {
+      toast.error("跳過操作失敗");
+      console.error("Error passing turn:", error);
+    } finally {
+      setIsPassing(false);
+    }
+  };
+
   const handleResetAllCombatState = async () => {
     setIsResetting(true);
+
     try {
-      const updates: Record<string, Partial<IPlayer>> = {};
-      Object.values(allPlayers).forEach((player) => {
-        updates[player.id] = {
-          ...player,
+      const updatePromises = Object.values(allPlayers).map(async (player) => {
+        const updatePayload: Partial<IPlayer> = {
           hp: 25,
           isResting: false,
           protected: false,
+          isPassed: false,
         };
+
+        return updateData(`players/${player.id}`, updatePayload);
       });
-      await updateData("players", updates);
-      toast.success("已重置所有玩家的血量與戰鬥狀態");
+
+      await Promise.all(updatePromises);
+      toast.success(`已重置所有玩家的血量與戰鬥狀態`);
       handleReset();
     } catch (error) {
       toast.error("重置戰鬥狀態失敗");
       console.error("Error resetting combat state:", error);
+    } finally {
+      setIsResetting(false);
     }
-    setIsResetting(false);
   };
 
   const getTraitLabel = (trait: string) => {
@@ -201,11 +251,67 @@ export const AdminCombatSelector = ({
                     保護區
                   </span>
                 )}
+                {player.isPassed && (
+                  <span className="text-xs bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 px-2 py-1 rounded">
+                    已跳過
+                  </span>
+                )}
               </div>
             </div>
           </Button>
         ))}
       </div>
+
+      {/* Pass Action Section - Appears between grid and selection status when attacker is selected */}
+      {attacker && isCombatStage && (
+        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+                <span className="font-medium text-sm">
+                  已選擇攻擊者：{attacker.number} {attacker.nickname}
+                </span>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {attacker.isPassed ? (
+                  <span className="text-amber-600 dark:text-amber-400">
+                    ⚠️ 此玩家已跳過，再次跳過將受到 {currentStageDamage}{" "}
+                    點傷害懲罰
+                  </span>
+                ) : (
+                  <span>可以選擇目標進行攻擊，或跳過此回合</span>
+                )}
+              </div>
+            </div>
+            <div className="flex-shrink-0">
+              <Button
+                onClick={handlePass}
+                disabled={isPassing}
+                variant="outline"
+                className="bg-background border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 min-h-[44px] px-6"
+              >
+                {isPassing ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    <span>跳過中...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <SkipForward className="h-4 w-4" />
+                    <span>跳過回合</span>
+                    {attacker.isPassed && (
+                      <span className="text-xs bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-400 px-2 py-1 rounded">
+                        -{currentStageDamage} HP
+                      </span>
+                    )}
+                  </div>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Selection Status */}
       {(attacker || target) && (
@@ -276,7 +382,7 @@ export const AdminCombatSelector = ({
       {!isCombatStage && (
         <div className="text-center text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
           <Zap className="h-4 w-4 inline mr-1" />
-          當前不是戰鬥階段，無法執行攻擊
+          當前不是戰鬥階段，無法執行攻擊或跳過
         </div>
       )}
     </div>

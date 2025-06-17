@@ -78,6 +78,7 @@ interface IPlayerAttribute {
   type: PLAYER_TYPE;
   elementCount: number;
   hp: number;
+  isPassed?: boolean;
 }
 
 const getRandomPlayerAttributeList = (playerCount: number) => {

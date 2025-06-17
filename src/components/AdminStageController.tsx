@@ -13,7 +13,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { toast } from "sonner";
-import { IPlayer } from "@/interfaces";
+import type { IPlayer } from "@/interfaces";
 
 export const AdminStageController = () => {
   const { data: game } = useGame();
@@ -34,6 +34,7 @@ export const AdminStageController = () => {
         ...player,
         isResting: false,
         protected: false,
+        isPassed: false,
       };
     });
     if (Object.keys(updates).length > 0) {
@@ -190,7 +191,7 @@ export const AdminStageController = () => {
             <span className="text-sm font-medium">戰鬥階段提醒</span>
           </div>
           <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-            離開戰鬥階段時，所有玩家的保護狀態和回合結束狀態將被自動清除
+            離開戰鬥階段時，所有玩家的保護狀態、回合結束狀態和跳過狀態將被自動清除
           </div>
         </div>
       )}
