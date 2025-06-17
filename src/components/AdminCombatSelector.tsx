@@ -54,8 +54,7 @@ export const AdminCombatSelector = ({
 
   const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
 
-  const canBeAttacker = (player: IPlayer) =>
-    !(player.isPassed && player.isResting);
+  const canBeAttacker = (player: IPlayer) => !player.isResting;
   const canBeTarget = (player: IPlayer) => !player.protected;
   const isDisabled = (player: IPlayer) => {
     if (!attacker) return !canBeAttacker(player);
@@ -202,6 +201,27 @@ export const AdminCombatSelector = ({
                 <div className="text-sm text-muted-foreground">
                   {getPlayerTypeLabel(player.type)} • 元素 {player.elementCount}
                 </div>
+
+                {(player.isResting || player.protected || player.isPassed) && (
+                  <div className="flex gap-1 flex-wrap mt-1">
+                    {player.isResting && (
+                      <span className="text-xs bg-yellow-100 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
+                        回合結束
+                      </span>
+                    )}
+                    {player.protected && (
+                      <span className="text-xs bg-green-100 dark:bg-green-900/60 text-green-800 dark:text-green-300 px-2 py-1 rounded">
+                        保護區
+                      </span>
+                    )}
+                    {player.isPassed && (
+                      <span className="text-xs bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 px-2 py-1 rounded">
+                        已跳過
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {/* Evolution Traits */}
                 {player.evolutionCards && player.evolutionCards.length > 0 && (
                   <div className="mt-2">
@@ -231,21 +251,6 @@ export const AdminCombatSelector = ({
                 )}
                 {target?.id === player.id && (
                   <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
-                )}
-                {player.isResting && (
-                  <span className="text-xs bg-yellow-100 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
-                    回合結束
-                  </span>
-                )}
-                {player.protected && (
-                  <span className="text-xs bg-green-100 dark:bg-green-900/60 text-green-800 dark:text-green-300 px-2 py-1 rounded">
-                    保護區
-                  </span>
-                )}
-                {player.isPassed && (
-                  <span className="text-xs bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 px-2 py-1 rounded">
-                    已跳過
-                  </span>
                 )}
               </div>
             </div>
