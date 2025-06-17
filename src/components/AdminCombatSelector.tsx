@@ -106,27 +106,24 @@ export const AdminCombatSelector = ({
 
   const handleResetAllCombatState = async () => {
     setIsResetting(true);
-
     try {
-      const updatePromises = Object.values(allPlayers).map(async (player) => {
-        const updatePayload: Partial<IPlayer> = {
+      const updates: Record<string, Partial<IPlayer>> = {};
+      Object.values(allPlayers).forEach((player) => {
+        updates[player.id] = {
+          ...player,
           hp: 25,
           isResting: false,
           protected: false,
         };
-
-        return updateData(`players/${player.id}`, updatePayload);
       });
-
-      await Promise.all(updatePromises);
-      toast.success(`已重置所有玩家的血量與戰鬥狀態`);
+      await updateData("players", updates);
+      toast.success("已重置所有玩家的血量與戰鬥狀態");
       handleReset();
     } catch (error) {
       toast.error("重置戰鬥狀態失敗");
       console.error("Error resetting combat state:", error);
-    } finally {
-      setIsResetting(false);
     }
+    setIsResetting(false);
   };
 
   const getTraitLabel = (trait: string) => {

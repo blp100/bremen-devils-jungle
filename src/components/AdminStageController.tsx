@@ -13,6 +13,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import { IPlayer } from "@/interfaces";
 
 export const AdminStageController = () => {
   const { data: game } = useGame();
@@ -27,15 +28,18 @@ export const AdminStageController = () => {
   const clearCombatStates = async () => {
     if (!players) return;
 
-    const updatePromises = Object.values(players).map(async (player) => {
-      const updatePayload = {
-        protected: false,
+    const updates: Record<string, Partial<IPlayer>> = {};
+    Object.values(players).forEach((player) => {
+      updates[player.id] = {
+        ...player,
         isResting: false,
+        protected: false,
       };
-      return updateData(`${DB_PATH.PLAYERS}/${player.id}`, updatePayload);
     });
+    if (Object.keys(updates).length > 0) {
+      await updateData(DB_PATH.PLAYERS, updates);
+    }
 
-    await Promise.all(updatePromises);
     toast.success("已清除所有玩家的戰鬥狀態");
   };
 
