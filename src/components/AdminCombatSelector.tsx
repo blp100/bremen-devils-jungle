@@ -10,14 +10,7 @@ import { handlePlayerAttack } from "@/services/combatServices";
 import type { IGame } from "@/interfaces";
 import { GAME_STAGE_TYPE, GAME_STAGES, EVOLUTION_TRAITS } from "@/constants";
 import { updateData } from "@/services/firebaseHelpers";
-import {
-  Swords,
-  RotateCcw,
-  Zap,
-  RefreshCw,
-  Heart,
-  SkipForward,
-} from "lucide-react";
+import { Swords, RotateCcw, RefreshCw, Heart, SkipForward } from "lucide-react";
 
 interface AdminCombatSelectorProps {
   players: IPlayer[];
@@ -69,8 +62,6 @@ export const AdminCombatSelector = ({
     if (!target && player.id !== attacker.id) return !canBeTarget(player);
     return false;
   };
-  const isCombatStage =
-    GAME_STAGES[game.stageIndex]?.type === GAME_STAGE_TYPE.COMBAT;
 
   const currentStage = GAME_STAGES[game.stageIndex];
   const currentStageDamage =
@@ -263,7 +254,9 @@ export const AdminCombatSelector = ({
       </div>
 
       {/* Pass Action Section - Appears between grid and selection status when attacker is selected */}
-      {attacker && isCombatStage && (
+      {attacker && (
+        // Add this line only for pass button functionality
+
         <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
@@ -340,7 +333,7 @@ export const AdminCombatSelector = ({
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={handleAttack}
-            disabled={!attacker || !target || !isCombatStage}
+            disabled={!attacker || !target}
             className="flex-1 min-h-[44px] text-sm"
             size="lg"
           >
@@ -378,13 +371,6 @@ export const AdminCombatSelector = ({
           )}
         </Button>
       </div>
-
-      {!isCombatStage && (
-        <div className="text-center text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
-          <Zap className="h-4 w-4 inline mr-1" />
-          當前不是戰鬥階段，無法執行攻擊或跳過
-        </div>
-      )}
     </div>
   );
 };
