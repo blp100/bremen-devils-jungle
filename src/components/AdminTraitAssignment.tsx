@@ -26,6 +26,7 @@ import {
   ArrowRight,
   Crown,
   Bug,
+  Skull,
 } from "lucide-react";
 import {
   Tooltip,
@@ -163,6 +164,9 @@ export const AdminTraitAssignment = ({
   };
 
   const handlePlayerClick = (playerId: string) => {
+    const player = players[playerId];
+    if (player.isDead) return; // Don't allow expanding dead players
+
     if (expandedPlayer === playerId) {
       setExpandedPlayer(null);
     } else {
@@ -248,6 +252,11 @@ export const AdminTraitAssignment = ({
       return;
     }
 
+    if (player.isDead) {
+      toast.error("無法為已死亡的玩家分配性狀");
+      return;
+    }
+
     // Check if player already has this trait
     if (player.evolutionCards?.includes(selectedTrait)) {
       toast.error(
@@ -294,6 +303,7 @@ export const AdminTraitAssignment = ({
       const updatePayload: Partial<IPlayer> = {
         evolutionCards: updatedTraits,
         hp: newHp,
+        isDead: newHp <= 0,
       };
 
       // Add target player ID for special traits
@@ -318,6 +328,10 @@ export const AdminTraitAssignment = ({
 
       if (targetPlayerId) {
         message += ` 目標為 ${players[targetPlayerId].nickname}`;
+      }
+
+      if (newHp <= 0) {
+        message += ` - 玩家已死亡`;
       }
 
       toast.success(message);
@@ -446,7 +460,11 @@ export const AdminTraitAssignment = ({
                 return (
                   <div
                     key={player.id}
-                    className="border rounded-lg overflow-hidden transition-all duration-200 hover:shadow-sm"
+                    className={`border rounded-lg overflow-hidden transition-all duration-200 hover:shadow-sm ${
+                      player.isDead
+                        ? "opacity-60 bg-gray-50 dark:bg-gray-900"
+                        : ""
+                    }`}
                   >
                     {/* Player Header - Always Visible */}
                     <div
@@ -454,16 +472,34 @@ export const AdminTraitAssignment = ({
                         isExpanded
                           ? "bg-blue-50 dark:bg-blue-900/20 border-b"
                           : "bg-muted/30"
-                      }`}
+                      } ${player.isDead ? "cursor-not-allowed" : ""}`}
                       onClick={() => handlePlayerClick(player.id)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div>
-                            <div className="font-semibold text-base">
+                            <div
+                              className={`font-semibold text-base ${
+                                player.isDead
+                                  ? "text-gray-500 dark:text-gray-400 line-through"
+                                  : ""
+                              }`}
+                            >
                               {player.number} {player.nickname}
+                              {player.isDead && (
+                                <span className="ml-2 text-xs bg-red-600 dark:bg-red-700 text-white px-2 py-1 rounded inline-flex items-center gap-1">
+                                  <Skull className="h-3 w-3" />
+                                  已死亡
+                                </span>
+                              )}
                             </div>
-                            <div className="text-sm text-muted-foreground">
+                            <div
+                              className={`text-sm text-muted-foreground ${
+                                player.isDead
+                                  ? "text-gray-400 dark:text-gray-500"
+                                  : ""
+                              }`}
+                            >
                               {getPlayerTypeLabel(player.type)} • HP:{" "}
                               {player.hp}
                             </div>
@@ -472,24 +508,46 @@ export const AdminTraitAssignment = ({
                         <div className="flex items-center gap-3">
                           <div className="text-right">
                             <div className="flex items-center gap-2">
-                              <Heart className="h-4 w-4 text-red-500 dark:text-red-400" />
-                              <span className="text-xl font-bold">
+                              <Heart
+                                className={`h-4 w-4 ${
+                                  player.isDead
+                                    ? "text-gray-400 dark:text-gray-500"
+                                    : "text-red-500 dark:text-red-400"
+                                }`}
+                              />
+                              <span
+                                className={`text-xl font-bold ${
+                                  player.isDead
+                                    ? "text-gray-500 dark:text-gray-400"
+                                    : ""
+                                }`}
+                              >
                                 {player.hp}
                               </span>
                             </div>
                             {/* Trait count indicator */}
                             {player.evolutionCards &&
                               player.evolutionCards.length > 0 && (
-                                <div className="text-xs text-muted-foreground mt-1">
+                                <div
+                                  className={`text-xs text-muted-foreground mt-1 ${
+                                    player.isDead
+                                      ? "text-gray-400 dark:text-gray-500"
+                                      : ""
+                                  }`}
+                                >
                                   {player.evolutionCards.length} 個性狀
                                 </div>
                               )}
                           </div>
                           {/* Expand/Collapse Icon */}
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          {!player.isDead && (
+                            <>
+                              {isExpanded ? (
+                                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
@@ -498,7 +556,13 @@ export const AdminTraitAssignment = ({
                       {player.evolutionCards &&
                         player.evolutionCards.length > 0 && (
                           <div className="mt-4">
-                            <div className="text-sm text-muted-foreground mb-2">
+                            <div
+                              className={`text-sm text-muted-foreground mb-2 ${
+                                player.isDead
+                                  ? "text-gray-400 dark:text-gray-500"
+                                  : ""
+                              }`}
+                            >
                               已擁有性狀：
                             </div>
                             <div className="flex flex-wrap gap-1">
@@ -506,7 +570,7 @@ export const AdminTraitAssignment = ({
                                 <Badge
                                   key={index}
                                   variant="secondary"
-                                  className="text-xs"
+                                  className={`text-xs ${player.isDead ? "opacity-50" : ""}`}
                                 >
                                   {getTraitLabel(trait)}
                                 </Badge>
@@ -518,7 +582,13 @@ export const AdminTraitAssignment = ({
                       {/* Special Trait Targets - Always Visible */}
                       <div className="mt-3 space-y-1">
                         {player.minionId && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <div
+                            className={`flex items-center gap-1 text-xs text-muted-foreground ${
+                              player.isDead
+                                ? "text-gray-400 dark:text-gray-500"
+                                : ""
+                            }`}
+                          >
                             <Crown className="h-3 w-3" />
                             <span>
                               手下：
@@ -527,7 +597,13 @@ export const AdminTraitAssignment = ({
                           </div>
                         )}
                         {player.parasiticTargetId && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <div
+                            className={`flex items-center gap-1 text-xs text-muted-foreground ${
+                              player.isDead
+                                ? "text-gray-400 dark:text-gray-500"
+                                : ""
+                            }`}
+                          >
                             <Bug className="h-3 w-3" />
                             <span>
                               寄生目標：
@@ -540,7 +616,7 @@ export const AdminTraitAssignment = ({
                     </div>
 
                     {/* Expanded Content - Trait Assignment */}
-                    {isExpanded && (
+                    {isExpanded && !player.isDead && (
                       <div className="p-4 bg-background border-t">
                         <div className="space-y-4">
                           {/* Trait Selection */}
@@ -657,7 +733,10 @@ export const AdminTraitAssignment = ({
                                   <SelectContent>
                                     {playerList
                                       .filter(
-                                        (p) => p.id !== player.id && p.hp > 0,
+                                        (p) =>
+                                          p.id !== player.id &&
+                                          p.hp > 0 &&
+                                          !p.isDead,
                                       )
                                       .map((targetPlayer) => (
                                         <SelectItem
@@ -786,6 +865,11 @@ export const AdminTraitAssignment = ({
                                       (-{finalHpDeduction})
                                     </span>
                                   )}
+                                  {resultingHp <= 0 && (
+                                    <span className="text-xs bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-400 px-2 py-1 rounded ml-2">
+                                      將死亡
+                                    </span>
+                                  )}
                                 </div>
 
                                 {/* GENETIC_MUTATION effect indicator */}
@@ -813,7 +897,8 @@ export const AdminTraitAssignment = ({
                               disabled={
                                 !selectedTraits[player.id] ||
                                 isAssigning ||
-                                (needsTarget && !targetPlayers[player.id])
+                                (needsTarget && !targetPlayers[player.id]) ||
+                                player.isDead
                               }
                               className="w-full min-h-[44px] mt-4"
                               size="lg"
@@ -833,6 +918,7 @@ export const AdminTraitAssignment = ({
                                       ` (扣除 ${finalHpDeduction} HP)`}
                                     {targetPlayer &&
                                       ` (目標: ${targetPlayer.nickname})`}
+                                    {resultingHp <= 0 && " - 玩家將死亡"}
                                   </span>
                                 </div>
                               )}

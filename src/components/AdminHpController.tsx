@@ -6,7 +6,7 @@ import { Input } from "./ui/input";
 import { toast } from "sonner";
 import type { IPlayer } from "@/interfaces";
 import { updateData } from "@/services/firebaseHelpers";
-import { ArrowLeft, Check, Heart } from "lucide-react";
+import { ArrowLeft, Check, Heart, Skull } from "lucide-react";
 
 interface AdminHpControllerProps {
   players: { [key: string]: IPlayer };
@@ -44,14 +44,32 @@ export const AdminHpController = ({ players }: AdminHpControllerProps) => {
                 key={player.id}
                 onClick={() => setSelectedPlayerId(player.id)}
                 variant="outline"
-                className="flex justify-between items-center p-6 h-auto min-h-[80px] text-left hover:bg-muted/50 dark:hover:bg-muted/50"
+                className={`flex justify-between items-center p-6 h-auto min-h-[80px] text-left hover:bg-muted/50 dark:hover:bg-muted/50 ${
+                  player.isDead ? "opacity-60 bg-gray-100 dark:bg-gray-800" : ""
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <div>
-                    <div className="font-semibold text-base">
+                    <div
+                      className={`font-semibold text-base ${
+                        player.isDead
+                          ? "text-gray-500 dark:text-gray-400 line-through"
+                          : ""
+                      }`}
+                    >
                       {player.number} {player.nickname}
+                      {player.isDead && (
+                        <span className="ml-2 text-xs bg-red-600 dark:bg-red-700 text-white px-2 py-1 rounded inline-flex items-center gap-1">
+                          <Skull className="h-3 w-3" />
+                          已死亡
+                        </span>
+                      )}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div
+                      className={`text-sm text-muted-foreground ${
+                        player.isDead ? "text-gray-400 dark:text-gray-500" : ""
+                      }`}
+                    >
                       {getPlayerTypeLabel(player.type)} • 元素{" "}
                       {player.elementCount}
                     </div>
@@ -59,8 +77,18 @@ export const AdminHpController = ({ players }: AdminHpControllerProps) => {
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-red-500 dark:text-red-400" />
-                    <span className="text-2xl font-bold">{player.hp}</span>
+                    <Heart
+                      className={`h-4 w-4 ${
+                        player.isDead
+                          ? "text-gray-400 dark:text-gray-500"
+                          : "text-red-500 dark:text-red-400"
+                      }`}
+                    />
+                    <span
+                      className={`text-2xl font-bold ${player.isDead ? "text-gray-500 dark:text-gray-400" : ""}`}
+                    >
+                      {player.hp}
+                    </span>
                   </div>
                   <div className="text-xs text-muted-foreground">血量</div>
                 </div>
@@ -91,8 +119,15 @@ const PlayerHpEditor = ({
   const updateHp = async () => {
     setIsUpdating(true);
     try {
-      await updateData(`players/${player.id}`, { hp });
-      toast.success(`${player.nickname} 的血量已更新為 ${hp}`);
+      const updatePayload: Partial<IPlayer> = {
+        hp,
+        isDead: hp <= 0,
+      };
+
+      await updateData(`players/${player.id}`, updatePayload);
+      toast.success(
+        `${player.nickname} 的血量已更新為 ${hp}${hp <= 0 ? "（已死亡）" : ""}`,
+      );
       onBack();
     } catch (error) {
       toast.error("更新血量失敗");
@@ -105,16 +140,35 @@ const PlayerHpEditor = ({
     setHp((prev) => Math.max(0, prev + amount));
   };
 
+  const willDie = hp <= 0;
+  const willRevive = player.isDead && hp > 0;
+
   return (
     <div className="space-y-6">
       {/* Player Info */}
-      <div className="text-center bg-muted/30 dark:bg-muted/30 p-6 rounded-lg">
+      <div
+        className={`text-center p-6 rounded-lg ${
+          player.isDead
+            ? "bg-gray-100 dark:bg-gray-800"
+            : "bg-muted/30 dark:bg-muted/30"
+        }`}
+      >
         <div className="flex items-center justify-center gap-3 mb-3">
           <div>
-            <div className="text-xl font-bold">
+            <div
+              className={`text-xl font-bold ${player.isDead ? "text-gray-500 dark:text-gray-400 line-through" : ""}`}
+            >
               {player.number} {player.nickname}
+              {player.isDead && (
+                <span className="ml-2 text-sm bg-red-600 dark:bg-red-700 text-white px-2 py-1 rounded inline-flex items-center gap-1">
+                  <Skull className="h-3 w-3" />
+                  已死亡
+                </span>
+              )}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div
+              className={`text-sm text-muted-foreground ${player.isDead ? "text-gray-400 dark:text-gray-500" : ""}`}
+            >
               {PLAYER_TYPE_LABELS[player.type]} • 元素 {player.elementCount}
             </div>
           </div>
@@ -124,8 +178,14 @@ const PlayerHpEditor = ({
       {/* Current HP Display */}
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Heart className="h-6 w-6 text-red-500 dark:text-red-400" />
-          <span className="text-4xl font-bold">{hp}</span>
+          <Heart
+            className={`h-6 w-6 ${willDie ? "text-gray-400 dark:text-gray-500" : "text-red-500 dark:text-red-400"}`}
+          />
+          <span
+            className={`text-4xl font-bold ${willDie ? "text-gray-500 dark:text-gray-400" : ""}`}
+          >
+            {hp}
+          </span>
         </div>
         <div className="text-sm text-muted-foreground">當前血量</div>
         {hp !== player.hp && (
@@ -141,6 +201,18 @@ const PlayerHpEditor = ({
               變更: {hp > player.hp ? "+" : ""}
               {hp - player.hp}
             </span>
+          </div>
+        )}
+
+        {/* Death/Revival Status */}
+        {willDie && !player.isDead && (
+          <div className="text-sm mt-2 text-red-600 dark:text-red-400 font-medium">
+            ⚠️ 此玩家將會死亡
+          </div>
+        )}
+        {willRevive && (
+          <div className="text-sm mt-2 text-green-600 dark:text-green-400 font-medium">
+            ✨ 此玩家將會復活
           </div>
         )}
       </div>
@@ -222,7 +294,11 @@ const PlayerHpEditor = ({
           ) : (
             <div className="flex items-center gap-2">
               <Check className="h-5 w-5" />
-              <span>確認更新血量</span>
+              <span>
+                確認更新血量
+                {willDie && !player.isDead && " (玩家將死亡)"}
+                {willRevive && " (玩家將復活)"}
+              </span>
             </div>
           )}
         </Button>

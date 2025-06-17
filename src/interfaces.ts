@@ -17,6 +17,7 @@ export interface IPlayer {
   protected: boolean;
   isResting: boolean;
   isPassed: boolean;
+  isDead: boolean;
   attackCards: { [playerNumber: number]: number };
   evolutionCards: string[];
   minionId?: string; // for LION_KING

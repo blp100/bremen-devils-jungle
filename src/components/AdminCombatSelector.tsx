@@ -10,7 +10,14 @@ import { handlePlayerAttack } from "@/services/combatServices";
 import type { IGame } from "@/interfaces";
 import { GAME_STAGE_TYPE, GAME_STAGES, EVOLUTION_TRAITS } from "@/constants";
 import { updateData } from "@/services/firebaseHelpers";
-import { Swords, RotateCcw, RefreshCw, Heart, SkipForward } from "lucide-react";
+import {
+  Swords,
+  RotateCcw,
+  RefreshCw,
+  Heart,
+  SkipForward,
+  Skull,
+} from "lucide-react";
 
 interface AdminCombatSelectorProps {
   players: IPlayer[];
@@ -54,9 +61,11 @@ export const AdminCombatSelector = ({
 
   const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
 
-  const canBeAttacker = (player: IPlayer) => !player.isResting;
-  const canBeTarget = (player: IPlayer) => !player.protected;
+  const canBeAttacker = (player: IPlayer) =>
+    !player.isResting && !player.isDead;
+  const canBeTarget = (player: IPlayer) => !player.protected && !player.isDead;
   const isDisabled = (player: IPlayer) => {
+    if (player.isDead) return true;
     if (!attacker) return !canBeAttacker(player);
     if (!target && player.id !== attacker.id) return !canBeTarget(player);
     return false;
@@ -67,6 +76,8 @@ export const AdminCombatSelector = ({
     currentStage.type === GAME_STAGE_TYPE.COMBAT && currentStage.damage;
 
   const handleSelectPlayer = (player: IPlayer) => {
+    if (player.isDead) return;
+
     if (!attacker && canBeAttacker(player)) {
       setAttacker(player);
     } else if (
@@ -108,7 +119,7 @@ export const AdminCombatSelector = ({
   };
 
   const handlePass = async () => {
-    if (!attacker) return;
+    if (!attacker || attacker.isDead) return;
 
     setIsPassing(true);
     try {
@@ -126,6 +137,12 @@ export const AdminCombatSelector = ({
         const newHp = Math.max(0, attacker.hp - damage);
         updatePayload.isResting = true;
         updatePayload.hp = newHp;
+
+        // Check if player dies from penalty
+        if (newHp <= 0) {
+          updatePayload.isDead = true;
+        }
+
         toastMessage = `${attacker.nickname} 再次跳過並受到 ${damage} 點傷害懲罰`;
       }
 
@@ -150,6 +167,7 @@ export const AdminCombatSelector = ({
           isResting: false,
           protected: false,
           isPassed: false,
+          isDead: false,
         };
 
         return updateData(`players/${player.id}`, updatePayload);
@@ -187,34 +205,58 @@ export const AdminCombatSelector = ({
             className={clsx(
               "flex justify-between items-center p-6 h-auto min-h-[80px] text-left hover:bg-muted/50 dark:hover:bg-muted/50",
               isDisabled(player) && "opacity-50 cursor-not-allowed",
+              player.isDead &&
+                "opacity-60 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600",
               attacker?.id === player.id &&
+                !player.isDead &&
                 "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:ring-blue-400",
               target?.id === player.id &&
+                !player.isDead &&
                 "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20 dark:ring-red-400",
             )}
           >
             <div className="flex items-center gap-3">
               <div>
-                <div className="font-semibold text-base">
+                <div
+                  className={clsx(
+                    "font-semibold text-base",
+                    player.isDead &&
+                      "text-gray-500 dark:text-gray-400 line-through",
+                  )}
+                >
                   {player.number} {player.nickname}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div
+                  className={clsx(
+                    "text-sm text-muted-foreground",
+                    player.isDead && "text-gray-400 dark:text-gray-500",
+                  )}
+                >
                   {getPlayerTypeLabel(player.type)} • 元素 {player.elementCount}
                 </div>
 
-                {(player.isResting || player.protected || player.isPassed) && (
+                {(player.isResting ||
+                  player.protected ||
+                  player.isPassed ||
+                  player.isDead) && (
                   <div className="flex gap-1 flex-wrap mt-1">
-                    {player.isResting && (
+                    {player.isDead && (
+                      <span className="text-xs bg-red-600 dark:bg-red-700 text-white px-2 py-1 rounded flex items-center gap-1">
+                        <Skull className="h-3 w-3" />
+                        已死亡
+                      </span>
+                    )}
+                    {!player.isDead && player.isResting && (
                       <span className="text-xs bg-yellow-100 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
                         回合結束
                       </span>
                     )}
-                    {player.protected && (
+                    {!player.isDead && player.protected && (
                       <span className="text-xs bg-green-100 dark:bg-green-900/60 text-green-800 dark:text-green-300 px-2 py-1 rounded">
                         保護區
                       </span>
                     )}
-                    {player.isPassed && (
+                    {!player.isDead && player.isPassed && (
                       <span className="text-xs bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 px-2 py-1 rounded">
                         已跳過
                       </span>
@@ -230,7 +272,10 @@ export const AdminCombatSelector = ({
                         <Badge
                           key={index}
                           variant="secondary"
-                          className="text-xs"
+                          className={clsx(
+                            "text-xs",
+                            player.isDead && "opacity-50",
+                          )}
                         >
                           {getTraitLabel(trait)}
                         </Badge>
@@ -242,14 +287,28 @@ export const AdminCombatSelector = ({
             </div>
             <div className="text-right">
               <div className="flex items-center gap-2 mb-1">
-                <Heart className="h-4 w-4 text-red-500 dark:text-red-400" />
-                <span className="text-xl font-bold">{player.hp}</span>
+                <Heart
+                  className={clsx(
+                    "h-4 w-4",
+                    player.isDead
+                      ? "text-gray-400 dark:text-gray-500"
+                      : "text-red-500 dark:text-red-400",
+                  )}
+                />
+                <span
+                  className={clsx(
+                    "text-xl font-bold",
+                    player.isDead && "text-gray-500 dark:text-gray-400",
+                  )}
+                >
+                  {player.hp}
+                </span>
               </div>
               <div className="flex gap-1 flex-wrap justify-end">
-                {attacker?.id === player.id && (
+                {attacker?.id === player.id && !player.isDead && (
                   <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
                 )}
-                {target?.id === player.id && (
+                {target?.id === player.id && !player.isDead && (
                   <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
                 )}
               </div>
@@ -259,9 +318,7 @@ export const AdminCombatSelector = ({
       </div>
 
       {/* Pass Action Section - Appears between grid and selection status when attacker is selected */}
-      {attacker && (
-        // Add this line only for pass button functionality
-
+      {attacker && !attacker.isDead && (
         <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
@@ -285,7 +342,7 @@ export const AdminCombatSelector = ({
             <div className="flex-shrink-0">
               <Button
                 onClick={handlePass}
-                disabled={isPassing}
+                disabled={isPassing || attacker.isDead}
                 variant="outline"
                 className="bg-background border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 min-h-[44px] px-6"
               >
@@ -319,6 +376,11 @@ export const AdminCombatSelector = ({
               <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
               <span>
                 攻擊者：玩家 {attacker.number}（{attacker.nickname}）
+                {attacker.isDead && (
+                  <span className="text-red-600 dark:text-red-400 ml-1">
+                    已死亡
+                  </span>
+                )}
               </span>
             </div>
           )}
@@ -327,6 +389,11 @@ export const AdminCombatSelector = ({
               <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
               <span>
                 目標：玩家 {target.number}（{target.nickname}）
+                {target.isDead && (
+                  <span className="text-red-600 dark:text-red-400 ml-1">
+                    已死亡
+                  </span>
+                )}
               </span>
             </div>
           )}
@@ -338,7 +405,7 @@ export const AdminCombatSelector = ({
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={handleAttack}
-            disabled={!attacker || !target}
+            disabled={!attacker || !target || attacker.isDead || target.isDead}
             className="flex-1 min-h-[44px] text-sm"
             size="lg"
           >

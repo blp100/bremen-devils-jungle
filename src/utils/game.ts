@@ -79,6 +79,7 @@ interface IPlayerAttribute {
   elementCount: number;
   hp: number;
   isPassed?: boolean;
+  isDead?: boolean;
 }
 
 const getRandomPlayerAttributeList = (playerCount: number) => {
@@ -117,6 +118,7 @@ const getRandomPlayerAttributeList = (playerCount: number) => {
       ...elementList[i],
       number: i + 1,
       hp: initialHp,
+      isDead: false,
     });
   }
 

@@ -58,6 +58,13 @@ const applyPostCombatTraitEffects = (
   }
 };
 
+const updateDeathStatus = (player: IPlayer) => {
+  if (player.hp <= 0) {
+    player.hp = 0;
+    player.isDead = true;
+  }
+};
+
 export const processCombatPhase = (
   attacker: IPlayer,
   target: IPlayer,
@@ -72,6 +79,31 @@ export const processCombatPhase = (
   players: { [key: string]: IPlayer };
   traitsTriggered: ITraitEffectLog[];
 } => {
+  // Prevent attacking dead players or attacking as a dead player
+  if (attacker.isDead) {
+    return {
+      success: false,
+      reason: "Dead players cannot attack.",
+      attacker,
+      target,
+      damageDealt: 0,
+      players: allPlayers,
+      traitsTriggered: [],
+    };
+  }
+
+  if (target.isDead) {
+    return {
+      success: false,
+      reason: "Cannot attack dead players.",
+      attacker,
+      target,
+      damageDealt: 0,
+      players: allPlayers,
+      traitsTriggered: [],
+    };
+  }
+
   // Prevent attacking your own minion if you are LION_KING
   if (
     attacker.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING) &&
@@ -104,11 +136,11 @@ export const processCombatPhase = (
       const player = allPlayers[playerId];
 
       // LION_KING: trigger minion follow-up attack
-      // TODO: it might be have some logic problem with attack, if the minion attack successed, the damage is 7, the minion would get 4 hp, the lion king would add 3 hp, and the parastic owner would get 4 hp which he's target is minion
       if (
         attacker.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING) &&
         attacker.minionId === player.id &&
-        player.id !== target.id
+        player.id !== target.id &&
+        !player.isDead
       ) {
         const minionResult = resolveDirectCombat(
           player,
@@ -203,6 +235,8 @@ const resolveDirectCombat = (
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
     updatedTarget.protected = game.round === undefined || game.round <= 3;
 
+    updateDeathStatus(updatedTarget);
+
     applyAfterCombatEffects(
       updatedAttacker,
       updatedTarget,
@@ -214,6 +248,7 @@ const resolveDirectCombat = (
     updatedAttacker.hp = Math.max(0, updatedAttacker.hp - damage);
     updatedAttacker.isResting = true;
     updatedAttacker.protected = true;
+    updateDeathStatus(updatedAttacker);
 
     updatedTarget.hp += damage;
 
