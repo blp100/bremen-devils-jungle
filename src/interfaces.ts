@@ -1,4 +1,4 @@
-import {
+import type {
   GAME_STAGE_TYPE,
   PLAYER_TYPE,
   GAME_STATUS,
@@ -16,6 +16,8 @@ export interface IPlayer {
   hp: number;
   protected: boolean;
   isResting: boolean;
+  isPassed: boolean;
+  isDead: boolean;
   attackCards: { [playerNumber: number]: number };
   evolutionCards: string[];
   minionId?: string; // for LION_KING

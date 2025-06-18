@@ -58,6 +58,13 @@ const applyPostCombatTraitEffects = (
   }
 };
 
+const updateDeathStatus = (player: IPlayer) => {
+  if (player.hp <= 0) {
+    player.hp = 0;
+    player.isDead = true;
+  }
+};
+
 export const processCombatPhase = (
   attacker: IPlayer,
   target: IPlayer,
@@ -72,6 +79,31 @@ export const processCombatPhase = (
   players: { [key: string]: IPlayer };
   traitsTriggered: ITraitEffectLog[];
 } => {
+  // Prevent attacking dead players or attacking as a dead player
+  if (attacker.isDead) {
+    return {
+      success: false,
+      reason: "Dead players cannot attack.",
+      attacker,
+      target,
+      damageDealt: 0,
+      players: allPlayers,
+      traitsTriggered: [],
+    };
+  }
+
+  if (target.isDead) {
+    return {
+      success: false,
+      reason: "Cannot attack dead players.",
+      attacker,
+      target,
+      damageDealt: 0,
+      players: allPlayers,
+      traitsTriggered: [],
+    };
+  }
+
   // Prevent attacking your own minion if you are LION_KING
   if (
     attacker.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING) &&
@@ -95,6 +127,7 @@ export const processCombatPhase = (
     game.maxElementCount,
     game.damage,
     allPlayers,
+    game,
   );
 
   // Reactive traits
@@ -103,23 +136,29 @@ export const processCombatPhase = (
       const player = allPlayers[playerId];
 
       // LION_KING: trigger minion follow-up attack
-      // TODO: it might be have some logic problem with attack, if the minion attack successed, the damage is 7, the minion would get 4 hp, the lion king would add 3 hp, and the parastic owner would get 4 hp which he's target is minion
       if (
         attacker.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING) &&
         attacker.minionId === player.id &&
-        player.id !== target.id
+        player.id !== target.id &&
+        !player.isDead
       ) {
         const minionResult = resolveDirectCombat(
           player,
-          target,
+          result.target,
           game.maxElementCount,
           game.damage,
           allPlayers,
+          game,
         );
+
         result.damageDealt += minionResult.damageDealt;
+        result.traitsTriggered.push(...minionResult.traitsTriggered);
         if (minionResult.success) {
-          attacker.hp += 3;
-          player.hp = Math.max(0, player.hp - 3);
+          result.attacker.hp += 3;
+          result.target.hp = minionResult.target.hp;
+          minionResult.attacker.hp = Math.max(0, minionResult.attacker.hp - 3);
+
+          allPlayers[minionResult.attacker.id] = { ...minionResult.attacker };
 
           triggerParasiticEffect(
             attacker,
@@ -169,7 +208,9 @@ const resolveDirectCombat = (
   maxElementCount: number,
   damage: number,
   allPlayers: { [key: string]: IPlayer },
+  game: IGame,
 ) => {
+  const playerCount = Object.keys(allPlayers).length;
   const updatedAttacker = { ...attacker };
   const updatedTarget = { ...target };
 
@@ -181,6 +222,7 @@ const resolveDirectCombat = (
     attacker,
     target,
     maxElementCount,
+    playerCount,
   );
   const evolutionValid = _canAttackBasedOnEvolutionCards(attacker, target);
 
@@ -191,7 +233,9 @@ const resolveDirectCombat = (
     updatedAttacker.isResting = true;
 
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
-    updatedTarget.protected = true;
+    updatedTarget.protected = game.round === undefined || game.round <= 3;
+
+    updateDeathStatus(updatedTarget);
 
     applyAfterCombatEffects(
       updatedAttacker,
@@ -204,6 +248,7 @@ const resolveDirectCombat = (
     updatedAttacker.hp = Math.max(0, updatedAttacker.hp - damage);
     updatedAttacker.isResting = true;
     updatedAttacker.protected = true;
+    updateDeathStatus(updatedAttacker);
 
     updatedTarget.hp += damage;
 
@@ -238,6 +283,7 @@ const _canAttackBasedOnElement = (
   attacker: IPlayer,
   target: IPlayer,
   maxElementCount: number,
+  playerCount: number,
 ) => {
   if (FAILED_ATTACK_MAP[attacker.type] === target.type) return false;
 
@@ -246,6 +292,7 @@ const _canAttackBasedOnElement = (
       attacker.elementCount,
       target.elementCount,
       maxElementCount,
+      playerCount,
     );
   }
 
@@ -256,11 +303,13 @@ const _canAttackBasedOnElementCount = (
   attackerElementCount: number,
   targetElementCount: number,
   maxElementCount: number,
+  playerCount?: number,
 ) => {
-  if ((attackerElementCount % maxElementCount) + 1 === targetElementCount) {
-    return false;
+  if (playerCount === 12) {
+    return (attackerElementCount % maxElementCount) + 1 !== targetElementCount;
+  } else {
+    return attackerElementCount - 1 === targetElementCount % maxElementCount;
   }
-  return true;
 };
 
 const _canAttackBasedOnEvolutionCards = (
