@@ -22,3 +22,6 @@ node_modules/
 ### Firebase Patch ###
 .runtimeconfig.json
 .firebase/
+
+### Vite Build/ Deployment file ###
+/dist
