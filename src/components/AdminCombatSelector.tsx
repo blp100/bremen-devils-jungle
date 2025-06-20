@@ -18,11 +18,21 @@ import {
   SkipForward,
   Skull,
 } from "lucide-react";
+import { CombatResultModal } from "@/components/CombatResultModal";
 
 interface AdminCombatSelectorProps {
   players: IPlayer[];
   game: IGame;
   allPlayers: { [key: string]: IPlayer };
+}
+
+interface CombatResult {
+  success: boolean;
+  reason: string;
+  attacker: IPlayer;
+  target: IPlayer;
+  damageDealt: number;
+  traitsTriggered: any[];
 }
 
 const TRAIT_LABELS: Record<string, string> = {
@@ -58,6 +68,15 @@ export const AdminCombatSelector = ({
   const [target, setTarget] = useState<IPlayer | null>(null);
   const [isResetting, setIsResetting] = useState(false);
   const [isPassing, setIsPassing] = useState(false);
+  const [isAttacking, setIsAttacking] = useState(false);
+
+  // Combat result modal state
+  const [combatResult, setCombatResult] = useState<CombatResult | null>(null);
+  const [originalAttacker, setOriginalAttacker] = useState<IPlayer | null>(
+    null,
+  );
+  const [originalTarget, setOriginalTarget] = useState<IPlayer | null>(null);
+  const [showResultModal, setShowResultModal] = useState(false);
 
   const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
 
@@ -96,26 +115,41 @@ export const AdminCombatSelector = ({
   };
 
   const handleAttack = async () => {
-    if (attacker && target) {
-      const result = await handlePlayerAttack(
-        attacker,
-        target,
-        allPlayers,
-        game,
-      );
+    if (attacker && target && !isAttacking) {
+      setIsAttacking(true);
 
-      if (result.success) {
-        toast.success(
-          `${attacker.nickname} 攻擊成功，對 ${target.nickname} 造成 ${result.damageDealt} 傷害`,
+      // Store original states before combat
+      setOriginalAttacker({ ...attacker });
+      setOriginalTarget({ ...target });
+
+      try {
+        const result = await handlePlayerAttack(
+          attacker,
+          target,
+          allPlayers,
+          game,
         );
-      } else {
-        toast.error(
-          `${attacker.nickname} 攻擊失敗，損失 ${result.damageDealt} 血量，${target.nickname} 回復同等血量`,
-        );
+
+        // Set combat result and show modal
+        setCombatResult(result);
+        setShowResultModal(true);
+
+        // Don't reset selection here - wait for modal confirmation
+      } catch (error) {
+        toast.error("戰鬥處理失敗");
+        console.error("Combat error:", error);
+      } finally {
+        setIsAttacking(false);
       }
-
-      handleReset();
     }
+  };
+
+  const handleCombatResultConfirm = () => {
+    setShowResultModal(false);
+    setCombatResult(null);
+    setOriginalAttacker(null);
+    setOriginalTarget(null);
+    handleReset();
   };
 
   const handlePass = async () => {
@@ -193,256 +227,284 @@ export const AdminCombatSelector = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Player Selection Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedPlayers.map((player) => (
-          <Button
-            key={player.id}
-            onClick={() => handleSelectPlayer(player)}
-            disabled={isDisabled(player)}
-            variant="outline"
-            className={clsx(
-              "flex justify-between items-center p-6 h-auto min-h-[80px] text-left hover:bg-muted/50 dark:hover:bg-muted/50",
-              isDisabled(player) && "opacity-50 cursor-not-allowed",
-              player.isDead &&
-                "opacity-60 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600",
-              attacker?.id === player.id &&
-                !player.isDead &&
-                "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:ring-blue-400",
-              target?.id === player.id &&
-                !player.isDead &&
-                "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20 dark:ring-red-400",
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div>
-                <div
-                  className={clsx(
-                    "font-semibold text-base",
-                    player.isDead &&
-                      "text-gray-500 dark:text-gray-400 line-through",
-                  )}
-                >
-                  {player.number} {player.nickname}
-                </div>
-                <div
-                  className={clsx(
-                    "text-sm text-muted-foreground",
-                    player.isDead && "text-gray-400 dark:text-gray-500",
-                  )}
-                >
-                  {getPlayerTypeLabel(player.type)} • 元素 {player.elementCount}
-                </div>
-
-                {(player.isResting ||
-                  player.protected ||
-                  player.isPassed ||
-                  player.isDead) && (
-                  <div className="flex gap-1 flex-wrap mt-1">
-                    {player.isDead && (
-                      <span className="text-xs bg-red-600 dark:bg-red-700 text-white px-2 py-1 rounded flex items-center gap-1">
-                        <Skull className="h-3 w-3" />
-                        已死亡
-                      </span>
+    <>
+      <div className="space-y-6">
+        {/* Player Selection Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sortedPlayers.map((player) => (
+            <Button
+              key={player.id}
+              onClick={() => handleSelectPlayer(player)}
+              disabled={isDisabled(player) || isAttacking}
+              variant="outline"
+              className={clsx(
+                "flex justify-between items-center p-6 h-auto min-h-[80px] text-left hover:bg-muted/50 dark:hover:bg-muted/50",
+                (isDisabled(player) || isAttacking) &&
+                  "opacity-50 cursor-not-allowed",
+                player.isDead &&
+                  "opacity-60 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600",
+                attacker?.id === player.id &&
+                  !player.isDead &&
+                  "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:ring-blue-400",
+                target?.id === player.id &&
+                  !player.isDead &&
+                  "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20 dark:ring-red-400",
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div>
+                  <div
+                    className={clsx(
+                      "text-sm text-muted-foreground",
+                      player.isDead && "text-gray-400 dark:text-gray-500",
                     )}
-                    {!player.isDead && player.isResting && (
-                      <span className="text-xs bg-yellow-100 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
-                        回合結束
-                      </span>
-                    )}
-                    {!player.isDead && player.protected && (
-                      <span className="text-xs bg-green-100 dark:bg-green-900/60 text-green-800 dark:text-green-300 px-2 py-1 rounded">
-                        保護區
-                      </span>
-                    )}
-                    {!player.isDead && player.isPassed && (
-                      <span className="text-xs bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 px-2 py-1 rounded">
-                        已跳過
-                      </span>
-                    )}
+                  >
+                    {player.number} {player.nickname}
                   </div>
-                )}
+                  <div
+                    className={clsx(
+                      "text-sm text-muted-foreground",
+                      player.isDead && "text-gray-400 dark:text-gray-500",
+                    )}
+                  >
+                    {getPlayerTypeLabel(player.type)} • 元素{" "}
+                    {player.elementCount}
+                  </div>
 
-                {/* Evolution Traits */}
-                {player.evolutionCards && player.evolutionCards.length > 0 && (
-                  <div className="mt-2">
-                    <div className="flex flex-wrap gap-1">
-                      {player.evolutionCards.map((trait, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className={clsx(
-                            "text-xs",
-                            player.isDead && "opacity-50",
-                          )}
-                        >
-                          {getTraitLabel(trait)}
-                        </Badge>
-                      ))}
+                  {(player.isResting ||
+                    player.protected ||
+                    player.isPassed ||
+                    player.isDead) && (
+                    <div className="flex gap-1 flex-wrap mt-1">
+                      {player.isDead && (
+                        <span className="text-xs bg-red-600 dark:bg-red-700 text-white px-2 py-1 rounded flex items-center gap-1">
+                          <Skull className="h-3 w-3" />
+                          已死亡
+                        </span>
+                      )}
+                      {!player.isDead && player.isResting && (
+                        <span className="text-xs bg-yellow-100 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
+                          回合結束
+                        </span>
+                      )}
+                      {!player.isDead && player.protected && (
+                        <span className="text-xs bg-green-100 dark:bg-green-900/60 text-green-800 dark:text-green-300 px-2 py-1 rounded">
+                          保護區
+                        </span>
+                      )}
+                      {!player.isDead && player.isPassed && (
+                        <span className="text-xs bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 px-2 py-1 rounded">
+                          已跳過
+                        </span>
+                      )}
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="flex items-center gap-2 mb-1">
-                <Heart
-                  className={clsx(
-                    "h-4 w-4",
-                    player.isDead
-                      ? "text-gray-400 dark:text-gray-500"
-                      : "text-red-500 dark:text-red-400",
                   )}
-                />
-                <span
-                  className={clsx(
-                    "text-xl font-bold",
-                    player.isDead && "text-gray-500 dark:text-gray-400",
-                  )}
-                >
-                  {player.hp}
-                </span>
-              </div>
-              <div className="flex gap-1 flex-wrap justify-end">
-                {attacker?.id === player.id && !player.isDead && (
-                  <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
-                )}
-                {target?.id === player.id && !player.isDead && (
-                  <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
-                )}
-              </div>
-            </div>
-          </Button>
-        ))}
-      </div>
 
-      {/* Pass Action Section - Appears between grid and selection status when attacker is selected */}
-      {attacker && !attacker.isDead && (
-        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
-                <span className="font-medium text-sm">
-                  已選擇攻擊者：{attacker.number} {attacker.nickname}
-                </span>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {attacker.isPassed ? (
-                  <span className="text-amber-600 dark:text-amber-400">
-                    ⚠️ 此玩家已跳過，再次跳過將受到 {currentStageDamage}{" "}
-                    點傷害懲罰
-                  </span>
-                ) : (
-                  <span>可以選擇目標進行攻擊，或跳過此回合</span>
-                )}
-              </div>
-            </div>
-            <div className="flex-shrink-0">
-              <Button
-                onClick={handlePass}
-                disabled={isPassing || attacker.isDead}
-                variant="outline"
-                className="bg-background border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 min-h-[44px] px-6"
-              >
-                {isPassing ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    <span>跳過中...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <SkipForward className="h-4 w-4" />
-                    <span>跳過回合</span>
-                    {attacker.isPassed && (
-                      <span className="text-xs bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-400 px-2 py-1 rounded">
-                        -{currentStageDamage} HP
-                      </span>
+                  {/* Evolution Traits */}
+                  {player.evolutionCards &&
+                    player.evolutionCards.length > 0 && (
+                      <div className="mt-2">
+                        <div className="flex flex-wrap gap-1">
+                          {player.evolutionCards.map((trait, index) => (
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className={clsx(
+                                "text-xs",
+                                player.isDead && "opacity-50",
+                              )}
+                            >
+                              {getTraitLabel(trait)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  </div>
-                )}
-              </Button>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-2 mb-1">
+                  <Heart
+                    className={clsx(
+                      "h-4 w-4",
+                      player.isDead
+                        ? "text-gray-400 dark:text-gray-500"
+                        : "text-red-500 dark:text-red-400",
+                    )}
+                  />
+                  <span
+                    className={clsx(
+                      "text-xl font-bold",
+                      player.isDead && "text-gray-500 dark:text-gray-400",
+                    )}
+                  >
+                    {player.hp}
+                  </span>
+                </div>
+                <div className="flex gap-1 flex-wrap justify-end">
+                  {attacker?.id === player.id && !player.isDead && (
+                    <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+                  )}
+                  {target?.id === player.id && !player.isDead && (
+                    <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
+                  )}
+                </div>
+              </div>
+            </Button>
+          ))}
+        </div>
+
+        {/* Pass Action Section - Appears between grid and selection status when attacker is selected */}
+        {attacker && !attacker.isDead && (
+          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+                  <span className="font-medium text-sm">
+                    已選擇攻擊者：{attacker.number} {attacker.nickname}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {attacker.isPassed ? (
+                    <span className="text-amber-600 dark:text-amber-400">
+                      ⚠️ 此玩家已跳過，再次跳過將受到 {currentStageDamage}{" "}
+                      點傷害懲罰
+                    </span>
+                  ) : (
+                    <span>可以選擇目標進行攻擊，或跳過此回合</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <Button
+                  onClick={handlePass}
+                  disabled={isPassing || attacker.isDead || isAttacking}
+                  variant="outline"
+                  className="bg-background border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 min-h-[44px] px-6"
+                >
+                  {isPassing ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <span>跳過中...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <SkipForward className="h-4 w-4" />
+                      <span>跳過回合</span>
+                      {attacker.isPassed && (
+                        <span className="text-xs bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-400 px-2 py-1 rounded">
+                          -{currentStageDamage} HP
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Selection Status */}
-      {(attacker || target) && (
-        <div className="bg-muted p-4 rounded-lg space-y-2">
-          {attacker && (
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
-              <span>
-                攻擊者：玩家 {attacker.number}（{attacker.nickname}）
-                {attacker.isDead && (
-                  <span className="text-red-600 dark:text-red-400 ml-1">
-                    已死亡
-                  </span>
-                )}
-              </span>
-            </div>
-          )}
-          {target && (
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
-              <span>
-                目標：玩家 {target.number}（{target.nickname}）
-                {target.isDead && (
-                  <span className="text-red-600 dark:text-red-400 ml-1">
-                    已死亡
-                  </span>
-                )}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+        {/* Selection Status */}
+        {(attacker || target) && (
+          <div className="bg-muted p-4 rounded-lg space-y-2">
+            {attacker && (
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+                <span>
+                  攻擊者：玩家 {attacker.number}（{attacker.nickname}）
+                  {attacker.isDead && (
+                    <span className="text-red-600 dark:text-red-400 ml-1">
+                      已死亡
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+            {target && (
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full"></div>
+                <span>
+                  目標：玩家 {target.number}（{target.nickname}）
+                  {target.isDead && (
+                    <span className="text-red-600 dark:text-red-400 ml-1">
+                      已死亡
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={handleAttack}
+              disabled={
+                !attacker ||
+                !target ||
+                attacker.isDead ||
+                target.isDead ||
+                isAttacking
+              }
+              className="flex-1 min-h-[44px] text-sm"
+              size="lg"
+            >
+              {isAttacking ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>執行中...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Swords className="h-4 w-4" />
+                  <span>執行攻擊</span>
+                </div>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              disabled={isAttacking}
+              className="flex-1 sm:flex-none min-h-[44px] text-sm"
+              size="lg"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              重新選擇
+            </Button>
+          </div>
+
           <Button
-            onClick={handleAttack}
-            disabled={!attacker || !target || attacker.isDead || target.isDead}
-            className="flex-1 min-h-[44px] text-sm"
+            variant="destructive"
+            onClick={handleResetAllCombatState}
+            disabled={isResetting || isAttacking}
+            className="w-full min-h-[44px] text-sm"
             size="lg"
           >
-            <Swords className="h-4 w-4 mr-2" />
-            執行攻擊
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            className="flex-1 sm:flex-none min-h-[44px] text-sm"
-            size="lg"
-          >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            重新選擇
+            {isResetting ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white dark:border-gray-300 border-t-transparent rounded-full animate-spin" />
+                <span>重置中...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" />
+                <span>重置血量與戰鬥狀態</span>
+              </div>
+            )}
           </Button>
         </div>
-
-        <Button
-          variant="destructive"
-          onClick={handleResetAllCombatState}
-          disabled={isResetting}
-          className="w-full min-h-[44px] text-sm"
-          size="lg"
-        >
-          {isResetting ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white dark:border-gray-300 border-t-transparent rounded-full animate-spin" />
-              <span>重置中...</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
-              <span>重置血量與戰鬥狀態</span>
-            </div>
-          )}
-        </Button>
       </div>
-    </div>
+      {/* Combat Result Modal */}
+      <CombatResultModal
+        isOpen={showResultModal}
+        onClose={handleCombatResultConfirm}
+        result={combatResult}
+        originalAttacker={originalAttacker}
+        originalTarget={originalTarget}
+      />
+    </>
   );
 };
