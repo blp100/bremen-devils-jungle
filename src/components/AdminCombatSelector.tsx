@@ -8,7 +8,8 @@ import clsx from "clsx";
 import { toast } from "sonner";
 import { handlePlayerAttack } from "@/services/combatServices";
 import type { IGame } from "@/interfaces";
-import { GAME_STAGE_TYPE, GAME_STAGES, EVOLUTION_TRAITS } from "@/constants";
+import { GAME_STAGE_TYPE, GAME_STAGES } from "@/constants";
+import { getTraitLabel } from "@/utils/traitHepler";
 import { updateData } from "@/services/firebaseHelpers";
 import {
   Swords,
@@ -34,23 +35,6 @@ interface CombatResult {
   damageDealt: number;
   traitsTriggered: any[];
 }
-
-const TRAIT_LABELS: Record<string, string> = {
-  [EVOLUTION_TRAITS.GENE_MUTATION]: "基因突變",
-  [EVOLUTION_TRAITS.DEADLY_POISON]: "劇毒",
-  [EVOLUTION_TRAITS.BLOODTHIRSTY]: "嗜血",
-  [EVOLUTION_TRAITS.SHARP_SPIKES]: "尖刺",
-  [EVOLUTION_TRAITS.HORUS_EYE]: "赫魯斯之眼",
-  [EVOLUTION_TRAITS.AMPHIBIOUS]: "兩棲",
-  [EVOLUTION_TRAITS.PARASITIC]: "寄生",
-  [EVOLUTION_TRAITS.FOREST_SCEPTER]: "森林權杖",
-  [EVOLUTION_TRAITS.TAIL_REGROWTH]: "斷尾",
-  [EVOLUTION_TRAITS.SPECIES_EXTINCTION]: "物種消亡",
-  [EVOLUTION_TRAITS.LION_KING]: "獅子王",
-  [EVOLUTION_TRAITS.FIERCE_GAZE]: "兇狠目光",
-  [EVOLUTION_TRAITS.HIBERNATION]: "冬眠",
-  [EVOLUTION_TRAITS.SCAVENGER]: "食腐",
-};
 
 const PLAYER_TYPE_LABELS: Record<string, string> = {
   fire: "火",
@@ -216,10 +200,6 @@ export const AdminCombatSelector = ({
     } finally {
       setIsResetting(false);
     }
-  };
-
-  const getTraitLabel = (trait: string) => {
-    return TRAIT_LABELS[trait] || trait;
   };
 
   const getPlayerTypeLabel = (type: string) => {

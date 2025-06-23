@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle, XCircle, Heart, ArrowRight, Skull } from "lucide-react";
 import type { IPlayer, ITraitEffectLog } from "@/interfaces";
+import { getTraitLabel } from "@/utils/traitHepler";
 
 interface CombatResult {
   success: boolean;
@@ -30,23 +31,6 @@ interface CombatResultModalProps {
   originalTarget: IPlayer | null;
 }
 
-const TRAIT_LABELS: Record<string, string> = {
-  "Gene Mutation": "基因突變",
-  "Deadly Poison": "劇毒",
-  Bloodthirsty: "嗜血",
-  "Sharp Spikes": "尖刺",
-  "Horus' Eye": "赫魯斯之眼",
-  Amphibious: "兩棲",
-  Parasitic: "寄生",
-  "Forest Scepter": "森林權杖",
-  "Tail Regrowth": "斷尾",
-  "Species Extinction": "物種消亡",
-  "Lion King": "獅子王",
-  "Fierce Gaze": "兇狠目光",
-  Hibernation: "冬眠",
-  Scavenger: "食腐",
-};
-
 export const CombatResultModal = ({
   isOpen,
   onClose,
@@ -55,10 +39,6 @@ export const CombatResultModal = ({
   originalTarget,
 }: CombatResultModalProps) => {
   if (!result || !originalAttacker || !originalTarget) return null;
-
-  const getTraitLabel = (trait: string) => {
-    return TRAIT_LABELS[trait] || trait;
-  };
 
   const attackerHpChange = result.attacker.hp - originalAttacker.hp;
   const targetHpChange = result.target.hp - originalTarget.hp;

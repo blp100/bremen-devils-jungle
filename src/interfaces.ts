@@ -19,10 +19,11 @@ export interface IPlayer {
   isPassed: boolean;
   isDead: boolean;
   attackCards: { [playerNumber: number]: number };
-  evolutionCards: string[];
+  evolutionCards: EVOLUTION_TRAITS[];
   minionId?: string; // for LION_KING
   parasiticTargetId?: string; // for PARASITIC
 }
+
 export interface IGame {
   createdAt: string;
   status: GAME_STATUS;

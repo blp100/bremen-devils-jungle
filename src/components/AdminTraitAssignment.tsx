@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { IPlayer } from "@/interfaces";
 import { EVOLUTION_TRAITS } from "@/constants";
+import { getTraitLabel } from "@/utils/traitHepler";
 import { updateData } from "@/services/firebaseHelpers";
 import {
   Check,
@@ -39,24 +40,6 @@ interface AdminTraitAssignmentProps {
   players: { [key: string]: IPlayer };
   currentRound: number;
 }
-
-// Chinese trait name mapping
-const TRAIT_LABELS: Record<string, string> = {
-  [EVOLUTION_TRAITS.GENE_MUTATION]: "基因突變",
-  [EVOLUTION_TRAITS.DEADLY_POISON]: "劇毒",
-  [EVOLUTION_TRAITS.BLOODTHIRSTY]: "嗜血",
-  [EVOLUTION_TRAITS.SHARP_SPIKES]: "尖刺",
-  [EVOLUTION_TRAITS.HORUS_EYE]: "赫魯斯之眼",
-  [EVOLUTION_TRAITS.AMPHIBIOUS]: "兩棲",
-  [EVOLUTION_TRAITS.PARASITIC]: "寄生",
-  [EVOLUTION_TRAITS.FOREST_SCEPTER]: "森林權杖",
-  [EVOLUTION_TRAITS.TAIL_REGROWTH]: "斷尾",
-  [EVOLUTION_TRAITS.SPECIES_EXTINCTION]: "物種消亡",
-  [EVOLUTION_TRAITS.LION_KING]: "獅子王",
-  [EVOLUTION_TRAITS.FIERCE_GAZE]: "兇狠目光",
-  [EVOLUTION_TRAITS.HIBERNATION]: "冬眠",
-  [EVOLUTION_TRAITS.SCAVENGER]: "食腐",
-};
 
 // Player type Chinese labels
 const PLAYER_TYPE_LABELS: Record<string, string> = {
@@ -237,7 +220,7 @@ export const AdminTraitAssignment = ({
   };
 
   const handleAssignTrait = async (playerId: string) => {
-    const selectedTrait = selectedTraits[playerId];
+    const selectedTrait = selectedTraits[playerId] as EVOLUTION_TRAITS;
     const hpDeduction = hpDeductions[playerId] || 0;
     const targetPlayerId = targetPlayers[playerId];
 
@@ -260,7 +243,7 @@ export const AdminTraitAssignment = ({
     // Check if player already has this trait
     if (player.evolutionCards?.includes(selectedTrait)) {
       toast.error(
-        `${player.nickname} 已經擁有 ${TRAIT_LABELS[selectedTrait]} 性狀`,
+        `${player.nickname} 已經擁有 ${getTraitLabel(selectedTrait)} 性狀`,
       );
       return;
     }
@@ -269,14 +252,14 @@ export const AdminTraitAssignment = ({
     if (isTraitAssignedToAnyPlayer(selectedTrait, playerId)) {
       const assignedPlayer = getPlayerWithTrait(selectedTrait);
       toast.error(
-        `${TRAIT_LABELS[selectedTrait]} 性狀已分配給 ${assignedPlayer?.nickname}`,
+        `${getTraitLabel(selectedTrait)} 性狀已分配給 ${assignedPlayer?.nickname}`,
       );
       return;
     }
 
     // Check if target player is required but not selected
     if (traitRequiresTarget(selectedTrait) && !targetPlayerId) {
-      toast.error(`${TRAIT_LABELS[selectedTrait]} 性狀需要選擇目標玩家`);
+      toast.error(`${getTraitLabel(selectedTrait)} 性狀需要選擇目標玩家`);
       return;
     }
 
@@ -316,7 +299,7 @@ export const AdminTraitAssignment = ({
       await updateData(`players/${playerId}`, updatePayload);
 
       // Create success message
-      let message = `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 性狀`;
+      let message = `已為 ${player.nickname} 分配 ${getTraitLabel(selectedTrait)} 性狀`;
 
       if (finalHpDeduction > 0) {
         message += ` 並扣除 ${finalHpDeduction} 點血量`;
@@ -381,10 +364,6 @@ export const AdminTraitAssignment = ({
       [EVOLUTION_TRAITS.SCAVENGER]: "任何玩家死亡時獲得4血量",
     };
     return descriptions[trait as EVOLUTION_TRAITS] || "";
-  };
-
-  const getTraitLabel = (trait: string) => {
-    return TRAIT_LABELS[trait] || trait;
   };
 
   const getTraitIcon = (trait: string) => {
@@ -929,7 +908,10 @@ export const AdminTraitAssignment = ({
                           {selectedTraits[player.id] && (
                             <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded border">
                               <strong>
-                                {getTraitLabel(selectedTraits[player.id])}：
+                                {getTraitLabel(
+                                  selectedTraits[player.id] as EVOLUTION_TRAITS,
+                                )}
+                                ：
                               </strong>
                               {getTraitDescription(selectedTraits[player.id])}
                             </div>
