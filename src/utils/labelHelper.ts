@@ -4,6 +4,7 @@ import {
   PLAYER_TYPE_LABELS,
   TRAIT_LABELS,
   TRAIT_DESCRIPTIONS,
+  ROUND_TRAIT_MAP,
 } from "@/constants";
 
 export const getTraitLabel = (trait: EVOLUTION_TRAITS): string => {
@@ -16,4 +17,8 @@ export const getPlayerTypeLabel = (type: PLAYER_TYPE) => {
 
 export const getTraitDescription = (trait: string) => {
   return TRAIT_DESCRIPTIONS[trait as EVOLUTION_TRAITS] || "";
+};
+
+export const getAvailableTraits = (round: number): EVOLUTION_TRAITS[] => {
+  return ROUND_TRAIT_MAP[round] ?? [];
 };

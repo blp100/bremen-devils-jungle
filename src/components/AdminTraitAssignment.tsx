@@ -19,6 +19,7 @@ import {
   getTraitLabel,
   getPlayerTypeLabel,
   getTraitDescription,
+  getAvailableTraits,
 } from "@/utils/labelHelper";
 import { updateData } from "@/services/firebaseHelpers";
 import {
@@ -62,37 +63,6 @@ export const AdminTraitAssignment = ({
   const [targetPlayers, setTargetPlayers] = useState<{
     [playerId: string]: string;
   }>({});
-
-  // Get available traits based on current round
-  const getAvailableTraits = (round: number) => {
-    switch (round) {
-      case 1:
-        return [
-          EVOLUTION_TRAITS.GENE_MUTATION,
-          EVOLUTION_TRAITS.DEADLY_POISON,
-          EVOLUTION_TRAITS.BLOODTHIRSTY,
-          EVOLUTION_TRAITS.SHARP_SPIKES,
-          EVOLUTION_TRAITS.HORUS_EYE,
-        ];
-      case 2:
-        return [
-          EVOLUTION_TRAITS.AMPHIBIOUS,
-          EVOLUTION_TRAITS.PARASITIC,
-          EVOLUTION_TRAITS.FOREST_SCEPTER,
-          EVOLUTION_TRAITS.TAIL_REGROWTH,
-          EVOLUTION_TRAITS.SPECIES_EXTINCTION,
-        ];
-      case 3:
-        return [
-          EVOLUTION_TRAITS.LION_KING,
-          EVOLUTION_TRAITS.FIERCE_GAZE,
-          EVOLUTION_TRAITS.HIBERNATION,
-          EVOLUTION_TRAITS.SCAVENGER,
-        ];
-      default:
-        return [];
-    }
-  };
 
   const availableTraits = getAvailableTraits(currentRound);
 
