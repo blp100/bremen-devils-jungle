@@ -20,7 +20,6 @@ const triggerParasiticEffect = (
         sourceId: parasite.id,
         targetId: host.id,
         damage: -hpGained,
-        note: `PARASITIC: ${parasite.nickname} leeched ${hpGained} HP from ${host.nickname}`,
       });
     }
   }
@@ -52,7 +51,6 @@ const applyPostCombatTraitEffects = (
         targetId:
           updatedAttacker.hp === 0 ? updatedAttacker.id : updatedTarget.id,
         damage: -4,
-        note: `SCAVENGER: ${player.nickname} scavenged 4 HP from the death of ${updatedAttacker.hp === 0 ? updatedAttacker.nickname : updatedTarget.nickname}`,
       });
     }
   }
@@ -364,14 +362,12 @@ const applyAfterCombatEffects = (
         sourceId: victor.id,
         targetId: victor.id,
         damage: -2,
-        note: `BLOODTHIRSTY: healed victor ${victor.nickname}`,
       },
       {
         trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
         sourceId: victor.id,
         targetId: loser.id,
         damage: 2,
-        note: `BLOODTHIRSTY: dealt extra damage to loser ${loser.nickname}`,
       },
     );
   }
@@ -388,7 +384,6 @@ const applyAfterCombatEffects = (
       sourceId: updatedTarget.id,
       targetId: updatedAttacker.id,
       damage: updatedAttacker.hp,
-      note: `DEADLY_POISON: ${updatedTarget.nickname}'s trait killed ${updatedAttacker.nickname}`,
     });
   }
 

@@ -23,31 +23,30 @@ export const handlePlayerAttack = async (
 
   await updatePlayerStatusAfterAttack(players);
 
-  const logEntry = {
+  const combatLogKey = `combat-${Date.now()}`;
+  await updateData(`${DB_PATH.COMBAT_LOGS}/${combatLogKey}`, {
     timestamp: new Date().toISOString(),
     attackerId: attacker.id,
     targetId: target.id,
     success: result.success,
     damage: result.damageDealt,
-  };
-
-  const logKey = `combat-${Date.now()}`;
-  await updateData(`${DB_PATH.COMBAT_LOGS}/${logKey}`, logEntry);
+  });
 
   if (result.traitsTriggered && result.traitsTriggered.length > 0) {
+    const updates: Record<string, any> = {};
     for (const effect of result.traitsTriggered) {
-      const traitLogEntry = {
+      const traitLogKey = `trait-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      updates[`${DB_PATH.COMBAT_LOGS}/${traitLogKey}`] = {
         timestamp: new Date().toISOString(),
         type: "trait-effect",
         trait: effect.trait,
         sourceId: effect.sourceId,
         targetId: effect.targetId,
         damage: effect.damage,
-        note: effect.note,
+        combatLogRef: combatLogKey,
       };
-      const traitLogKey = `trait-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      await updateData(`${DB_PATH.COMBAT_LOGS}/${traitLogKey}`, traitLogEntry);
     }
+    await updateData("/", updates);
   }
 
   return result;
