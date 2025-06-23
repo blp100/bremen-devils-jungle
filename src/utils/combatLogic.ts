@@ -233,6 +233,13 @@ const resolveDirectCombat = (
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
     updatedTarget.protected = game.round === undefined || game.round <= 3;
 
+    triggerParasiticEffect(
+      updatedAttacker,
+      damage,
+      allPlayers,
+      traitsTriggered,
+    );
+
     updateDeathStatus(updatedTarget);
 
     applyAfterCombatEffects(
