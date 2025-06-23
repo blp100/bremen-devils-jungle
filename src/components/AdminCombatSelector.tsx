@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { handlePlayerAttack } from "@/services/combatServices";
 import type { IGame } from "@/interfaces";
 import { GAME_STAGE_TYPE, GAME_STAGES } from "@/constants";
-import { getTraitLabel } from "@/utils/labelHelper";
+import { getTraitLabel, getPlayerTypeLabel } from "@/utils/labelHelper";
 import { updateData } from "@/services/firebaseHelpers";
 import {
   Swords,
@@ -35,13 +35,6 @@ interface CombatResult {
   damageDealt: number;
   traitsTriggered: any[];
 }
-
-const PLAYER_TYPE_LABELS: Record<string, string> = {
-  fire: "火",
-  water: "水",
-  wood: "木",
-  electric: "電",
-};
 
 export const AdminCombatSelector = ({
   players,
@@ -201,11 +194,6 @@ export const AdminCombatSelector = ({
       setIsResetting(false);
     }
   };
-
-  const getPlayerTypeLabel = (type: string) => {
-    return PLAYER_TYPE_LABELS[type] || type;
-  };
-
   return (
     <>
       <div className="space-y-6">

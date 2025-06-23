@@ -7,24 +7,14 @@ import { toast } from "sonner";
 import type { IPlayer } from "@/interfaces";
 import { updateData } from "@/services/firebaseHelpers";
 import { ArrowLeft, Check, Heart, Skull } from "lucide-react";
+import { getPlayerTypeLabel } from "@/utils/labelHelper";
 
 interface AdminHpControllerProps {
   players: { [key: string]: IPlayer };
 }
 
-const PLAYER_TYPE_LABELS: Record<string, string> = {
-  fire: "火",
-  water: "水",
-  wood: "木",
-  electric: "電",
-};
-
 export const AdminHpController = ({ players }: AdminHpControllerProps) => {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-
-  const getPlayerTypeLabel = (type: string) => {
-    return PLAYER_TYPE_LABELS[type] || type;
-  };
 
   if (!selectedPlayerId) {
     return (
@@ -169,7 +159,7 @@ const PlayerHpEditor = ({
             <div
               className={`text-sm text-muted-foreground ${player.isDead ? "text-gray-400 dark:text-gray-500" : ""}`}
             >
-              {PLAYER_TYPE_LABELS[player.type]} • 元素 {player.elementCount}
+              {getPlayerTypeLabel(player.type)} • 元素 {player.elementCount}
             </div>
           </div>
         </div>

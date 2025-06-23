@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { IPlayer } from "@/interfaces";
 import { EVOLUTION_TRAITS } from "@/constants";
-import { getTraitLabel } from "@/utils/labelHelper";
+import { getTraitLabel, getPlayerTypeLabel } from "@/utils/labelHelper";
 import { updateData } from "@/services/firebaseHelpers";
 import {
   Check,
@@ -40,14 +40,6 @@ interface AdminTraitAssignmentProps {
   players: { [key: string]: IPlayer };
   currentRound: number;
 }
-
-// Player type Chinese labels
-const PLAYER_TYPE_LABELS: Record<string, string> = {
-  fire: "火",
-  water: "水",
-  wood: "木",
-  electric: "電",
-};
 
 export const AdminTraitAssignment = ({
   players,
@@ -99,10 +91,6 @@ export const AdminTraitAssignment = ({
   };
 
   const availableTraits = getAvailableTraits(currentRound);
-
-  const getPlayerTypeLabel = (type: string) => {
-    return PLAYER_TYPE_LABELS[type] || type;
-  };
 
   // Create a map of which traits are already assigned to which players
   const assignedTraitsMap = useMemo(() => {

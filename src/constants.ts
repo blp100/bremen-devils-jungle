@@ -72,6 +72,13 @@ export const TRAIT_LABELS: Record<EVOLUTION_TRAITS, string> = {
   [EVOLUTION_TRAITS.SCAVENGER]: "食腐",
 };
 
+export const PLAYER_TYPE_LABELS: Record<PLAYER_TYPE, string> = {
+  [PLAYER_TYPE.FIRE]: "火",
+  [PLAYER_TYPE.WATER]: "水",
+  [PLAYER_TYPE.WOOD]: "木",
+  [PLAYER_TYPE.ELECTRIC]: "電",
+};
+
 export enum GAME_STAGE_TYPE {
   DISCUSSION = "discussion",
   COMBAT = "combat",
