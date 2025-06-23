@@ -223,8 +223,9 @@ export const AdminCombatSelector = ({
                 <div>
                   <div
                     className={clsx(
-                      "text-sm text-muted-foreground",
-                      player.isDead && "text-gray-400 dark:text-gray-500",
+                      "font-semibold text-base",
+                      player.isDead &&
+                        "text-gray-500 dark:text-gray-400 line-through",
                     )}
                   >
                     {player.number} {player.nickname}
@@ -472,6 +473,7 @@ export const AdminCombatSelector = ({
         result={combatResult}
         originalAttacker={originalAttacker}
         originalTarget={originalTarget}
+        allPlayers={allPlayers}
       />
     </>
   );
