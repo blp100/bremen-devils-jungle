@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle, XCircle, Heart, ArrowRight, Skull } from "lucide-react";
 import type { IPlayer, ITraitEffectLog } from "@/interfaces";
-import { getTraitLabel } from "@/utils/traitHepler";
+import { getTraitLabel } from "@/utils/labelHelper";
 
 interface CombatResult {
   success: boolean;

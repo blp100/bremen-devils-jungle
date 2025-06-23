@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { IPlayer } from "@/interfaces";
 import { EVOLUTION_TRAITS } from "@/constants";
-import { getTraitLabel } from "@/utils/traitHepler";
+import { getTraitLabel } from "@/utils/labelHelper";
 import { updateData } from "@/services/firebaseHelpers";
 import {
   Check,

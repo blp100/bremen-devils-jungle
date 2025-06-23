@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { handlePlayerAttack } from "@/services/combatServices";
 import type { IGame } from "@/interfaces";
 import { GAME_STAGE_TYPE, GAME_STAGES } from "@/constants";
-import { getTraitLabel } from "@/utils/traitHepler";
+import { getTraitLabel } from "@/utils/labelHelper";
 import { updateData } from "@/services/firebaseHelpers";
 import {
   Swords,
