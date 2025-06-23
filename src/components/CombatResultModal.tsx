@@ -186,11 +186,11 @@ export const CombatResultModal = ({
             <div className="bg-muted/50 p-3 rounded-lg">
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="font-medium">
-                  #{originalAttacker.number} {originalAttacker.nickname}
+                  {originalAttacker.number} {originalAttacker.nickname}
                 </span>
                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
                 <span className="font-medium">
-                  #{originalTarget.number} {originalTarget.nickname}
+                  {originalTarget.number} {originalTarget.nickname}
                 </span>
               </div>
               <div className="text-center text-sm font-semibold">
@@ -211,7 +211,7 @@ export const CombatResultModal = ({
               <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium text-blue-800 dark:text-blue-300">
-                    #{originalAttacker.number} {originalAttacker.nickname}
+                    {originalAttacker.number} {originalAttacker.nickname}
                   </span>
                   <div className="flex items-center gap-1">
                     <span className="font-mono">{originalAttacker.hp}</span>
@@ -248,7 +248,7 @@ export const CombatResultModal = ({
               <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium text-red-800 dark:text-red-300">
-                    #{originalTarget.number} {originalTarget.nickname}
+                    {originalTarget.number} {originalTarget.nickname}
                   </span>
                   <div className="flex items-center gap-1">
                     <span className="font-mono">{originalTarget.hp}</span>
@@ -301,7 +301,7 @@ export const CombatResultModal = ({
                         >
                           <div className="flex items-center gap-2">
                             <span className="font-medium">
-                              #{effect.playerNumber} {effect.playerName}
+                              {effect.playerNumber} {effect.playerName}
                             </span>
                             <Badge
                               variant="secondary"
@@ -342,12 +342,12 @@ export const CombatResultModal = ({
                   <div className="space-y-0.5 text-xs">
                     {result.attacker.isDead && (
                       <div>
-                        • #{originalAttacker.number} {originalAttacker.nickname}
+                        • {originalAttacker.number} {originalAttacker.nickname}
                       </div>
                     )}
                     {result.target.isDead && (
                       <div>
-                        • #{originalTarget.number} {originalTarget.nickname}
+                        • {originalTarget.number} {originalTarget.nickname}
                       </div>
                     )}
                   </div>
