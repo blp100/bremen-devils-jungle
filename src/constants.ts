@@ -79,6 +79,24 @@ export const PLAYER_TYPE_LABELS: Record<PLAYER_TYPE, string> = {
   [PLAYER_TYPE.ELECTRIC]: "電",
 };
 
+export const TRAIT_DESCRIPTIONS: Record<EVOLUTION_TRAITS, string> = {
+  [EVOLUTION_TRAITS.GENE_MUTATION]: "進化階段消耗減少3點血量",
+  [EVOLUTION_TRAITS.DEADLY_POISON]: "死亡時攻擊者也會死亡",
+  [EVOLUTION_TRAITS.BLOODTHIRSTY]: "戰鬥時勝者額外獲得2血量，敗者額外失去2血量",
+  [EVOLUTION_TRAITS.SHARP_SPIKES]: "被攻擊時攻擊者先失去2血量",
+  [EVOLUTION_TRAITS.HORUS_EYE]: "討論階段可查看其他玩家血量",
+  [EVOLUTION_TRAITS.AMPHIBIOUS]: "可攻擊同元素玩家",
+  [EVOLUTION_TRAITS.PARASITIC]: "寄生目標獲得血量時自己也獲得相同血量",
+  [EVOLUTION_TRAITS.FOREST_SCEPTER]: "可決定攻擊順序",
+  [EVOLUTION_TRAITS.TAIL_REGROWTH]: "可棄2張攻擊卡保留血量",
+  [EVOLUTION_TRAITS.SPECIES_EXTINCTION]:
+    "可移除特定元素所有玩家5血量（限一次）",
+  [EVOLUTION_TRAITS.LION_KING]: "可指定一名手下，攻擊時手下也會攻擊",
+  [EVOLUTION_TRAITS.FIERCE_GAZE]: "可不使用攻擊卡進行攻擊",
+  [EVOLUTION_TRAITS.HIBERNATION]: "攻擊成功後本階段無法被攻擊",
+  [EVOLUTION_TRAITS.SCAVENGER]: "任何玩家死亡時獲得4血量",
+};
+
 export enum GAME_STAGE_TYPE {
   DISCUSSION = "discussion",
   COMBAT = "combat",
