@@ -53,7 +53,6 @@ const triggerBloodthirstyTrait = (
   updatedTarget: IPlayer,
   success: boolean,
   traitsTriggered: ITraitEffectLog[],
-  allPlayers: { [key: string]: IPlayer },
 ): void => {
   if (
     updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY) ||
@@ -65,20 +64,12 @@ const triggerBloodthirstyTrait = (
     victor.hp += 2;
     loser.hp = Math.max(0, loser.hp - 2);
 
-    traitsTriggered.push(
-      {
-        trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
-        sourceId: victor.id,
-        targetId: victor.id,
-        damage: -2,
-      },
-      {
-        trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
-        sourceId: victor.id,
-        targetId: loser.id,
-        damage: 2,
-      },
-    );
+    traitsTriggered.push({
+      trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
+      sourceId: victor.id,
+      targetId: loser.id,
+      damage: 2,
+    });
   }
 };
 
@@ -215,14 +206,13 @@ const applyAfterCombatEffects = (
   updatedTarget: IPlayer,
   success: boolean,
   traitsTriggered: ITraitEffectLog[],
-  allPlayers: { [key: string]: IPlayer },
+  _allPlayers: { [key: string]: IPlayer },
 ) => {
   triggerBloodthirstyTrait(
     updatedAttacker,
     updatedTarget,
     success,
     traitsTriggered,
-    allPlayers,
   );
   triggerDeadlyPoisonTrait(updatedAttacker, updatedTarget, traitsTriggered);
   triggerHibernationTrait(updatedAttacker);

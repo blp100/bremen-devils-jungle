@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import type { IPlayer, ITraitEffectLog } from "@/interfaces";
 import { getTraitLabel } from "@/utils/labelHelper";
+import { EVOLUTION_TRAITS } from "@/constants";
 
 interface CombatResult {
   success: boolean;
@@ -76,13 +77,16 @@ export const CombatResultModal = ({
       isSource: boolean;
     }> = [];
 
+    console.log(result.traitsTriggered);
+
     result.traitsTriggered.forEach((effect) => {
       // For traits that affect the source player (trait holder)
       if (effect.sourceId && effect.damage !== 0) {
         const sourcePlayer = getPlayerInfo(effect.sourceId);
+        const targetPlayer = getPlayerInfo(effect.targetId);
 
         // Special handling for Parasitic - the parasite (source) gains HP
-        if (effect.trait === "Parasitic" && effect.damage < 0) {
+        if (effect.trait === EVOLUTION_TRAITS.PARASITIC && effect.damage < 0) {
           effects.push({
             playerId: effect.sourceId,
             playerNumber: sourcePlayer.number,
@@ -92,6 +96,28 @@ export const CombatResultModal = ({
             isSource: true,
           });
         }
+
+        // Special handling for Bloodthirst
+        if (effect.trait === EVOLUTION_TRAITS.BLOODTHIRSTY) {
+          console.log(effect);
+          effects.push({
+            playerId: effect.sourceId,
+            playerNumber: sourcePlayer.number,
+            playerName: sourcePlayer.nickname,
+            trait: getTraitLabel(effect.trait),
+            hpChange: effect.damage,
+            isSource: true,
+          });
+          effects.push({
+            playerId: effect.targetId,
+            playerNumber: targetPlayer.number,
+            playerName: targetPlayer.nickname,
+            trait: getTraitLabel(effect.trait),
+            hpChange: -effect.damage,
+            isSource: true,
+          });
+        }
+
         // For other traits where source takes damage (like Sharp Spikes)
         else if (effect.damage > 0 && effect.sourceId !== effect.targetId) {
           effects.push({
