@@ -9,27 +9,35 @@ const updateDeathStatus = (player: IPlayer) => {
 };
 
 /** Trait trigger handlers */
-
 const triggerParasiticTrait = (
-  host: IPlayer,
-  hpGained: number,
   allPlayers: { [key: string]: IPlayer },
+  previousHp: Record<string, number>,
   traitsTriggered: ITraitEffectLog[],
 ) => {
   for (const parasiteId in allPlayers) {
     const parasite = allPlayers[parasiteId];
+    const hostId = parasite.parasiticTargetId ?? "";
+
     if (
       parasite.evolutionCards?.includes(EVOLUTION_TRAITS.PARASITIC) &&
-      parasite.parasiticTargetId === host.id
+      hostId &&
+      allPlayers[hostId]
     ) {
-      parasite.hp += hpGained;
+      console.log(`Parasatic function executed!`);
+      const hpBefore = previousHp[hostId] ?? 0;
+      const hpAfter = allPlayers[hostId].hp;
+      const diff = hpAfter - hpBefore;
 
-      traitsTriggered.push({
-        trait: EVOLUTION_TRAITS.PARASITIC,
-        sourceId: parasite.id,
-        targetId: host.id,
-        damage: -hpGained,
-      });
+      console.log(diff);
+      if (diff > 0) {
+        parasite.hp += diff;
+        traitsTriggered.push({
+          trait: EVOLUTION_TRAITS.PARASITIC,
+          sourceId: parasite.id,
+          targetId: hostId,
+          damage: -diff,
+        });
+      }
     }
   }
 };
@@ -55,7 +63,6 @@ const triggerBloodthirstyTrait = (
     const loser = success ? updatedTarget : updatedAttacker;
 
     victor.hp += 2;
-    triggerParasiticTrait(victor, 2, allPlayers, traitsTriggered);
     loser.hp = Math.max(0, loser.hp - 2);
 
     traitsTriggered.push(
@@ -118,8 +125,6 @@ const triggerScavengerTrait = (
     ) {
       player.hp += 4;
 
-      triggerParasiticTrait(player, 4, allPlayers, traitsTriggered);
-
       traitsTriggered.push({
         trait: EVOLUTION_TRAITS.SCAVENGER,
         sourceId: player.id,
@@ -165,7 +170,6 @@ const triggerLionKingTrait = (
       allPlayers[minionResult.attacker.id] = { ...minionResult.attacker };
       traitsTriggered.push(...minionResult.traitsTriggered);
 
-      triggerParasiticTrait(attacker, 3, allPlayers, traitsTriggered);
       applyPostCombatTraitEffects(
         allPlayers,
         traitsTriggered,
@@ -238,6 +242,12 @@ export const processCombatPhase = (
   players: { [key: string]: IPlayer };
   traitsTriggered: ITraitEffectLog[];
 } => {
+  // Record all players' hp at begging of combat
+  const previousHp: Record<string, number> = {};
+  Object.keys(allPlayers).forEach((id) => {
+    previousHp[id] = allPlayers[id].hp;
+  });
+
   // Prevent attacking dead players or attacking as a dead player
   if (attacker.isDead) {
     return {
@@ -319,6 +329,8 @@ export const processCombatPhase = (
     ...result.target,
   };
 
+  triggerParasiticTrait(allPlayers, previousHp, result.traitsTriggered);
+
   return {
     ...result,
     players: allPlayers,
@@ -357,8 +369,6 @@ const resolveDirectCombat = (
 
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
     updatedTarget.protected = game.round === undefined || game.round <= 3;
-
-    triggerParasiticTrait(updatedAttacker, damage, allPlayers, traitsTriggered);
 
     updateDeathStatus(updatedTarget);
 
