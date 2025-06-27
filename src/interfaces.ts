@@ -23,6 +23,7 @@ export interface IPlayer {
   evolutionCards: EVOLUTION_TRAITS[];
   minionId?: string; // for LION_KING
   parasiticTargetId?: string; // for PARASITIC
+  hasUsedTailRegrowth?: boolean; // for TAIL_REGROWTH
 }
 
 export interface IGame {
