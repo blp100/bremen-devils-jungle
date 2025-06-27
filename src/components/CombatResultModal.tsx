@@ -77,8 +77,6 @@ export const CombatResultModal = ({
       isSource: boolean;
     }> = [];
 
-    console.log(result.traitsTriggered);
-
     result.traitsTriggered.forEach((effect) => {
       // For traits that affect the source player (trait holder)
       if (effect.sourceId && effect.damage !== 0) {
@@ -99,7 +97,6 @@ export const CombatResultModal = ({
 
         // Special handling for Bloodthirst
         if (effect.trait === EVOLUTION_TRAITS.BLOODTHIRSTY) {
-          console.log(effect);
           effects.push({
             playerId: effect.sourceId,
             playerNumber: sourcePlayer.number,

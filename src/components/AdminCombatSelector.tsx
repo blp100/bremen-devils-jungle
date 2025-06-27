@@ -135,6 +135,7 @@ export const AdminCombatSelector = ({
     setIsPassing(true);
     try {
       const hasAlreadyPassed = attacker.isPassed;
+      const shouldPunish = hasAlreadyPassed && !attacker.hasFought;
 
       const updatePayload: Partial<IPlayer> = {
         isPassed: true,
@@ -143,7 +144,7 @@ export const AdminCombatSelector = ({
       let toastMessage = `${attacker.nickname} 已跳過此回合`;
 
       // If player has already passed, apply damage penalty first
-      if (hasAlreadyPassed && currentStage?.type === GAME_STAGE_TYPE.COMBAT) {
+      if (shouldPunish && currentStage?.type === GAME_STAGE_TYPE.COMBAT) {
         const damage = currentStage.damage;
         const newHp = Math.max(0, attacker.hp - damage);
         updatePayload.isResting = true;
@@ -155,6 +156,8 @@ export const AdminCombatSelector = ({
         }
 
         toastMessage = `${attacker.nickname} 再次跳過並受到 ${damage} 點傷害懲罰`;
+      } else if (hasAlreadyPassed && attacker.hasFought) {
+        updatePayload.isResting = true;
       }
 
       await updateData(`players/${attacker.id}`, updatePayload);
@@ -179,6 +182,7 @@ export const AdminCombatSelector = ({
           protected: false,
           isPassed: false,
           isDead: false,
+          hasFought: false,
         };
 
         return updateData(`players/${player.id}`, updatePayload);
@@ -335,7 +339,7 @@ export const AdminCombatSelector = ({
                   </span>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {attacker.isPassed ? (
+                  {attacker.isPassed && !attacker.hasFought ? (
                     <span className="text-amber-600 dark:text-amber-400">
                       ⚠️ 此玩家已跳過，再次跳過將受到 {currentStageDamage}{" "}
                       點傷害懲罰
@@ -361,7 +365,7 @@ export const AdminCombatSelector = ({
                     <div className="flex items-center gap-2">
                       <SkipForward className="h-4 w-4" />
                       <span>跳過回合</span>
-                      {attacker.isPassed && (
+                      {attacker.isPassed && !attacker.hasFought && (
                         <span className="text-xs bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-400 px-2 py-1 rounded">
                           -{currentStageDamage} HP
                         </span>

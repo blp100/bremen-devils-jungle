@@ -84,7 +84,7 @@ const triggerDeadlyPoisonTrait = (
     updatedTarget.hp === 0
   ) {
     updatedAttacker.hp = 0;
-    updatedAttacker.isDead = true;
+    updateDeathStatus(updatedAttacker);
 
     traitsTriggered.push({
       trait: EVOLUTION_TRAITS.DEADLY_POISON,
@@ -326,7 +326,6 @@ export const processCombatPhase = (
     game,
     result.traitsTriggered,
   );
-  result.target = allPlayers[result.target.id];
 
   applyPostCombatTraitEffects(
     allPlayers,
@@ -378,14 +377,19 @@ const resolveDirectCombat = (
   );
   const evolutionValid = _canAttackBasedOnEvolutionCards(attacker, target);
 
+  updatedAttacker.hasFought = true;
+  updatedTarget.hasFought = true;
+
   const success = (elementValid || evolutionValid) && !updatedTarget.protected;
 
   if (success) {
     updatedAttacker.hp += damage;
     updatedAttacker.isResting = true;
 
+    updatedAttacker.hasFought = true;
+    updatedTarget.hasFought = true;
+
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
-    console.log(`Game Round:`, game.round);
     updatedTarget.protected = game.round === undefined || game.round <= 3;
 
     updateDeathStatus(updatedTarget);
@@ -399,8 +403,6 @@ const resolveDirectCombat = (
     );
   } else {
     updatedAttacker.hp = Math.max(0, updatedAttacker.hp - damage);
-    updatedAttacker.isResting = true;
-    updatedAttacker.protected = true;
     updateDeathStatus(updatedAttacker);
 
     updatedTarget.hp += damage;

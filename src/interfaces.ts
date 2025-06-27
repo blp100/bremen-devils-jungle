@@ -15,6 +15,7 @@ export interface IPlayer {
   elementCount: number;
   hp: number;
   protected: boolean;
+  hasFought?: boolean;
   isResting: boolean;
   isPassed: boolean;
   isDead: boolean;
