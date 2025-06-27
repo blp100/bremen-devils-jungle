@@ -47,12 +47,8 @@ export const AdminStageController = () => {
   const handlePreviousStage = async () => {
     if (game && !isFirstStage) {
       const newStageIndex = currentStageIndex - 1;
-      const newStage = GAME_STAGES[newStageIndex];
 
-      if (
-        currentStage?.type === GAME_STAGE_TYPE.COMBAT &&
-        newStage?.type !== GAME_STAGE_TYPE.COMBAT
-      ) {
+      if (currentStage?.type === GAME_STAGE_TYPE.COMBAT) {
         await clearCombatStates();
       }
 
@@ -65,12 +61,8 @@ export const AdminStageController = () => {
   const handleNextStage = async () => {
     if (game && !isLastStage) {
       const newStageIndex = currentStageIndex + 1;
-      const newStage = GAME_STAGES[newStageIndex];
 
-      if (
-        currentStage?.type === GAME_STAGE_TYPE.COMBAT &&
-        newStage?.type !== GAME_STAGE_TYPE.COMBAT
-      ) {
+      if (currentStage?.type === GAME_STAGE_TYPE.COMBAT) {
         await clearCombatStates();
       }
 
