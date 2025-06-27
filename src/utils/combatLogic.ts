@@ -1,6 +1,7 @@
 import { IPlayer, IGame, ITraitEffectLog } from "@/interfaces";
 import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
 
+const BLOODTHIRSTY_ADDITIONAL_AMOUNT = 2;
 const LION_KING_HEAL_AMOUNT = 3;
 
 const updateDeathStatus = (player: IPlayer) => {
@@ -61,14 +62,14 @@ const triggerBloodthirstyTrait = (
     const victor = success ? updatedAttacker : updatedTarget;
     const loser = success ? updatedTarget : updatedAttacker;
 
-    victor.hp += 2;
-    loser.hp = Math.max(0, loser.hp - 2);
+    victor.hp += BLOODTHIRSTY_ADDITIONAL_AMOUNT;
+    loser.hp = Math.max(0, loser.hp - BLOODTHIRSTY_ADDITIONAL_AMOUNT);
 
     traitsTriggered.push({
       trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
       sourceId: victor.id,
       targetId: loser.id,
-      damage: 2,
+      damage: BLOODTHIRSTY_ADDITIONAL_AMOUNT,
     });
   }
 };
