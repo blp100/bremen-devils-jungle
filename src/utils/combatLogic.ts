@@ -1,6 +1,8 @@
 import { IPlayer, IGame, ITraitEffectLog } from "@/interfaces";
 import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
 
+const LION_KING_HEAL_AMOUNT = 3;
+
 const updateDeathStatus = (player: IPlayer) => {
   if (player.hp <= 0) {
     player.hp = 0;
@@ -23,12 +25,10 @@ const triggerParasiticTrait = (
       hostId &&
       allPlayers[hostId]
     ) {
-      console.log(`Parasatic function executed!`);
       const hpBefore = previousHp[hostId] ?? 0;
       const hpAfter = allPlayers[hostId].hp;
       const diff = hpAfter - hpBefore;
 
-      console.log(diff);
       if (diff > 0) {
         parasite.hp += diff;
         traitsTriggered.push({
@@ -133,7 +133,7 @@ const triggerLionKingTrait = (
   allPlayers: { [key: string]: IPlayer },
   game: IGame,
   traitsTriggered: ITraitEffectLog[],
-): { updatedTarget: IPlayer } => {
+): void => {
   let updatedTarget = target;
 
   for (const playerId in allPlayers) {
@@ -154,11 +154,36 @@ const triggerLionKingTrait = (
         game,
       );
 
-      attacker.hp += 3;
-      updatedTarget = minionResult.target;
-      minionResult.attacker.hp = Math.max(0, minionResult.attacker.hp - 3);
+      if (minionResult.success) {
+        const minionHpGain = -minionResult.damageDealt + LION_KING_HEAL_AMOUNT;
+        allPlayers[attacker.id].hp += LION_KING_HEAL_AMOUNT;
+        updatedTarget = minionResult.target;
+        allPlayers[minionResult.attacker.id].hp = Math.max(
+          0,
+          minionResult.attacker.hp - LION_KING_HEAL_AMOUNT,
+        );
 
-      allPlayers[minionResult.attacker.id] = { ...minionResult.attacker };
+        traitsTriggered.push({
+          trait: EVOLUTION_TRAITS.LION_KING,
+          sourceId: attacker.id,
+          targetId: updatedTarget.id,
+          damage: -LION_KING_HEAL_AMOUNT,
+        });
+
+        traitsTriggered.push({
+          trait: EVOLUTION_TRAITS.LION_KING,
+          sourceId: minionResult.attacker.id,
+          targetId: updatedTarget.id,
+          damage: minionHpGain,
+        });
+      } else {
+        traitsTriggered.push({
+          trait: EVOLUTION_TRAITS.LION_KING,
+          sourceId: minionResult.attacker.id,
+          targetId: updatedTarget.id,
+          damage: minionResult.damageDealt,
+        });
+      }
       traitsTriggered.push(...minionResult.traitsTriggered);
 
       applyPostCombatTraitEffects(
@@ -167,10 +192,12 @@ const triggerLionKingTrait = (
         minionResult.attacker,
         minionResult.target,
       );
+      // Ensure updatedTarget is synced into allPlayers
+      allPlayers[minionResult.attacker.id] = { ...minionResult.attacker };
+
+      allPlayers[minionResult.target.id] = { ...minionResult.target };
     }
   }
-
-  return { updatedTarget };
 };
 
 const applyPostCombatTraitEffects = (
@@ -290,16 +317,14 @@ export const processCombatPhase = (
   );
 
   // Reactive traits
-  if (result.success) {
-    const lionKingResult = triggerLionKingTrait(
-      attacker,
-      result.target,
-      allPlayers,
-      game,
-      result.traitsTriggered,
-    );
-    result.target = lionKingResult.updatedTarget;
-  }
+  triggerLionKingTrait(
+    attacker,
+    result.target,
+    allPlayers,
+    game,
+    result.traitsTriggered,
+  );
+  result.target = allPlayers[result.target.id];
 
   applyPostCombatTraitEffects(
     allPlayers,
@@ -358,6 +383,7 @@ const resolveDirectCombat = (
     updatedAttacker.isResting = true;
 
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
+    console.log(`Game Round:`, game.round);
     updatedTarget.protected = game.round === undefined || game.round <= 3;
 
     updateDeathStatus(updatedTarget);

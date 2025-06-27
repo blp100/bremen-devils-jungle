@@ -119,7 +119,7 @@ export const CombatResultModal = ({
         }
 
         // For other traits where source takes damage (like Sharp Spikes)
-        else if (effect.damage > 0 && effect.sourceId !== effect.targetId) {
+        else if (effect.damage !== 0 && effect.sourceId !== effect.targetId) {
           effects.push({
             playerId: effect.sourceId,
             playerNumber: sourcePlayer.number,
