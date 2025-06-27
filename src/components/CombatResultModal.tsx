@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -201,6 +202,9 @@ export const CombatResultModal = ({
               </>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            This is combat dialog.
+          </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
