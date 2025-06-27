@@ -84,6 +84,7 @@ const triggerDeadlyPoisonTrait = (
     updatedTarget.hp === 0
   ) {
     updatedAttacker.hp = 0;
+    updatedAttacker.isDead = true;
 
     traitsTriggered.push({
       trait: EVOLUTION_TRAITS.DEADLY_POISON,
