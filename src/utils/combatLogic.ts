@@ -404,7 +404,7 @@ const resolveDirectCombat = (
     updatedTarget.hasFought = true;
 
     updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
-    updatedTarget.protected = game.round === undefined || game.round <= 3;
+    updatedTarget.protected = game.round === undefined || game.round <= 2;
 
     updateDeathStatus(updatedTarget);
 
@@ -417,6 +417,7 @@ const resolveDirectCombat = (
     );
   } else {
     updatedAttacker.hp = Math.max(0, updatedAttacker.hp - damage);
+    updatedAttacker.protected = game.round === undefined || game.round <= 2;
     updateDeathStatus(updatedAttacker);
 
     updatedTarget.hp += damage;
