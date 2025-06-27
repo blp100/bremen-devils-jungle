@@ -1,4 +1,4 @@
-import { IPlayer, IGame, ITraitEffectLog } from "@/interfaces";
+import type { IPlayer, IGame, ITraitEffectLog } from "@/interfaces";
 import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
 
 const BLOODTHIRSTY_ADDITIONAL_AMOUNT = 2;
@@ -98,6 +98,25 @@ const triggerDeadlyPoisonTrait = (
 const triggerHibernationTrait = (updatedAttacker: IPlayer): void => {
   if (updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.HIBERNATION)) {
     updatedAttacker.protected = true;
+  }
+};
+
+const triggerTailRegrowthTrait = (
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
+  traitsTriggered: ITraitEffectLog[],
+): void => {
+  if (
+    updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.TAIL_REGROWTH) &&
+    updatedTarget.hasUsedTailRegrowth
+  ) {
+    updatedTarget.hasUsedTailRegrowth = false;
+    traitsTriggered.push({
+      trait: EVOLUTION_TRAITS.TAIL_REGROWTH,
+      sourceId: updatedAttacker.id,
+      targetId: updatedTarget.id,
+      damage: 0,
+    });
   }
 };
 
@@ -393,20 +412,27 @@ const resolveDirectCombat = (
 
   updatedAttacker.hasFought = true;
   updatedTarget.hasFought = true;
+  updatedAttacker.isResting = true;
 
   const success = (elementValid || evolutionValid) && !updatedTarget.protected;
 
   if (success) {
     updatedAttacker.hp += damage;
-    updatedAttacker.isResting = true;
 
-    updatedAttacker.hasFought = true;
-    updatedTarget.hasFought = true;
-
-    updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
-    updatedTarget.protected = game.round === undefined || game.round <= 2;
-
-    updateDeathStatus(updatedTarget);
+    // Check if target used TAIL_REGROWTH trait
+    triggerTailRegrowthTrait(updatedAttacker, updatedTarget, traitsTriggered);
+    if (
+      !(
+        updatedTarget.evolutionCards?.includes(
+          EVOLUTION_TRAITS.TAIL_REGROWTH,
+        ) && updatedTarget.hasUsedTailRegrowth
+      )
+    ) {
+      // Normal damage application
+      updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
+      updatedTarget.protected = game.round === undefined || game.round <= 2;
+      updateDeathStatus(updatedTarget);
+    }
 
     applyAfterCombatEffects(
       updatedAttacker,
@@ -416,6 +442,7 @@ const resolveDirectCombat = (
       allPlayers,
     );
   } else {
+    // Attack failed - attacker takes damage, target gains HP
     updatedAttacker.hp = Math.max(0, updatedAttacker.hp - damage);
     updatedAttacker.protected = game.round === undefined || game.round <= 2;
     updateDeathStatus(updatedAttacker);

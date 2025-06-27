@@ -20,6 +20,8 @@ import {
   Skull,
 } from "lucide-react";
 import { CombatResultModal } from "@/components/CombatResultModal";
+import { TailRegrowthModal } from "@/components/TailRegrowthModal";
+import { EVOLUTION_TRAITS } from "@/constants";
 
 interface AdminCombatSelectorProps {
   players: IPlayer[];
@@ -54,6 +56,13 @@ export const AdminCombatSelector = ({
   );
   const [originalTarget, setOriginalTarget] = useState<IPlayer | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
+
+  // Tail Regrowth modal state
+  const [showTailRegrowthModal, setShowTailRegrowthModal] = useState(false);
+  const [pendingCombat, setPendingCombat] = useState<{
+    attacker: IPlayer;
+    target: IPlayer;
+  } | null>(null);
 
   const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
 
@@ -93,32 +102,91 @@ export const AdminCombatSelector = ({
 
   const handleAttack = async () => {
     if (attacker && target && !isAttacking) {
-      setIsAttacking(true);
+      // Check if target has TAIL_REGROWTH trait and hasn't used it yet
+      const hasTailRegrowth = target.evolutionCards?.includes(
+        EVOLUTION_TRAITS.TAIL_REGROWTH,
+      );
+      const hasUsedTailRegrowth = target.hasUsedTailRegrowth;
 
-      // Store original states before combat
-      setOriginalAttacker({ ...attacker });
-      setOriginalTarget({ ...target });
-
-      try {
-        const result = await handlePlayerAttack(
-          attacker,
-          target,
-          allPlayers,
-          game,
-        );
-
-        // Set combat result and show modal
-        setCombatResult(result);
-        setShowResultModal(true);
-
-        // Don't reset selection here - wait for modal confirmation
-      } catch (error) {
-        toast.error("戰鬥處理失敗");
-        console.error("Combat error:", error);
-      } finally {
-        setIsAttacking(false);
+      if (hasTailRegrowth && !hasUsedTailRegrowth) {
+        // Show TailRegrowth modal and store pending combat
+        setPendingCombat({ attacker, target });
+        setShowTailRegrowthModal(true);
+        return;
       }
+
+      // Proceed with normal combat
+      await executeCombat(attacker, target);
     }
+  };
+
+  const executeCombat = async (
+    attackerPlayer: IPlayer,
+    targetPlayer: IPlayer,
+  ) => {
+    setIsAttacking(true);
+
+    // Store original states before combat
+    setOriginalAttacker({ ...attackerPlayer });
+    setOriginalTarget({ ...targetPlayer });
+
+    try {
+      const result = await handlePlayerAttack(
+        attackerPlayer,
+        targetPlayer,
+        allPlayers,
+        game,
+      );
+
+      // Set combat result and show modal
+      setCombatResult(result);
+      setShowResultModal(true);
+
+      // Don't reset selection here - wait for modal confirmation
+    } catch (error) {
+      toast.error("戰鬥處理失敗");
+      console.error("Combat error:", error);
+    } finally {
+      setIsAttacking(false);
+    }
+  };
+
+  const handleTailRegrowthConfirm = async () => {
+    if (!pendingCombat) return;
+
+    try {
+      // Update target player to mark trait as used
+      await updateData(`players/${pendingCombat.target.id}`, {
+        hasUsedTailRegrowth: true,
+      });
+
+      toast.success(`${pendingCombat.target.nickname} 使用了斷尾求生`);
+
+      // Close modal and proceed with combat
+      setShowTailRegrowthModal(false);
+
+      // Get updated target data and proceed with combat
+      const updatedTarget = {
+        ...pendingCombat.target,
+        hasUsedTailRegrowth: true,
+      };
+
+      await executeCombat(pendingCombat.attacker, updatedTarget);
+      setPendingCombat(null);
+    } catch (error) {
+      toast.error("使用斷尾求生失敗");
+      console.error("Error using tail regrowth:", error);
+    }
+  };
+
+  const handleTailRegrowthCancel = () => {
+    if (!pendingCombat) return;
+
+    // Proceed with normal combat without using the trait
+    executeCombat(pendingCombat.attacker, pendingCombat.target);
+
+    setShowTailRegrowthModal(false);
+    setPendingCombat(null);
   };
 
   const handleCombatResultConfirm = () => {
@@ -441,7 +509,7 @@ export const AdminCombatSelector = ({
               variant="outline"
               onClick={handleReset}
               disabled={isAttacking}
-              className="flex-1 sm:flex-none min-h-[44px] text-sm"
+              className="flex-1 sm:flex-none min-h-[44px] text-sm bg-transparent"
               size="lg"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
@@ -478,6 +546,13 @@ export const AdminCombatSelector = ({
         originalAttacker={originalAttacker}
         originalTarget={originalTarget}
         allPlayers={allPlayers}
+      />
+      {/* Tail Regrowth Modal */}
+      <TailRegrowthModal
+        isOpen={showTailRegrowthModal}
+        onConfirm={handleTailRegrowthConfirm}
+        onCancel={handleTailRegrowthCancel}
+        player={pendingCombat?.target || null}
       />
     </>
   );

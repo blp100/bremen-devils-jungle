@@ -36,6 +36,12 @@ export const AdminStageController = () => {
         protected: false,
         isPassed: false,
       };
+      if (player.hasUsedTailRegrowth != undefined) {
+        updates[player.id] = {
+          ...player,
+          hasUsedTailRegrowth: false,
+        };
+      }
     });
     if (Object.keys(updates).length > 0) {
       await updateData(DB_PATH.PLAYERS, updates);
