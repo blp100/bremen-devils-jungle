@@ -1,36 +1,24 @@
-import { useState } from "react";
+"use client";
 
+import { useState } from "react";
+import { JoinScreen } from "@/components/JoinScreen";
 import { createPlayer } from "../utils";
 
 const Join = () => {
-  const [nickname, setNickname] = useState("");
-  const isValid = nickname.length > 0 && nickname.length <= 20;
+  const [isJoining, setIsJoining] = useState(false);
 
-  return (
-    <div>
-      <h1>Join Page</h1>
-      <form>
-        <input
-          type="text"
-          name="nickname"
-          placeholder="Nickname"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-        />
-        <button
-          type="submit"
-          disabled={!isValid}
-          onClick={async (e) => {
-            e.preventDefault();
-            const playerId = await createPlayer(nickname);
-            window.location.href = `/player/${playerId}`;
-          }}
-        >
-          Submit
-        </button>
-      </form>
-    </div>
-  );
+  const handleJoin = async (nickname: string) => {
+    setIsJoining(true);
+    try {
+      const playerId = await createPlayer(nickname);
+      window.location.href = `/player/${playerId}`;
+    } catch (error) {
+      console.error("Failed to create player:", error);
+      setIsJoining(false);
+    }
+  };
+
+  return <JoinScreen onJoin={handleJoin} isJoining={isJoining} />;
 };
 
 export default Join;
