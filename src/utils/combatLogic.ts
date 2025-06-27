@@ -135,20 +135,20 @@ const triggerLionKingTrait = (
   allPlayers: { [key: string]: IPlayer },
   game: IGame,
   traitsTriggered: ITraitEffectLog[],
-): void => {
-  let updatedTarget = target;
+): IPlayer => {
+  let updatedTarget = { ...target };
 
   for (const playerId in allPlayers) {
-    const player = allPlayers[playerId];
+    const minion = allPlayers[playerId];
 
     if (
       attacker.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING) &&
-      attacker.minionId === player.id &&
-      player.id !== target.id &&
-      !player.isDead
+      attacker.minionId === minion.id &&
+      minion.id !== target.id &&
+      !minion.isDead
     ) {
-      const minionResult = resolveDirectCombat(
-        player,
+      const minionCombatResult = resolveDirectCombat(
+        minion,
         target,
         game.maxElementCount,
         game.damage,
@@ -156,14 +156,19 @@ const triggerLionKingTrait = (
         game,
       );
 
-      if (minionResult.success) {
-        const minionHpGain = -minionResult.damageDealt + LION_KING_HEAL_AMOUNT;
+      if (minionCombatResult.success) {
+        const minionHpGain =
+          -minionCombatResult.damageDealt + LION_KING_HEAL_AMOUNT;
         allPlayers[attacker.id].hp += LION_KING_HEAL_AMOUNT;
-        updatedTarget = minionResult.target;
-        allPlayers[minionResult.attacker.id].hp = Math.max(
-          0,
-          minionResult.attacker.hp - LION_KING_HEAL_AMOUNT,
-        );
+        updatedTarget = { ...minionCombatResult.target };
+        allPlayers[minionCombatResult.attacker.id] = {
+          ...minionCombatResult.attacker,
+          hp: Math.max(
+            0,
+            minionCombatResult.attacker.hp - LION_KING_HEAL_AMOUNT,
+          ),
+          isResting: false,
+        };
 
         traitsTriggered.push({
           trait: EVOLUTION_TRAITS.LION_KING,
@@ -174,32 +179,40 @@ const triggerLionKingTrait = (
 
         traitsTriggered.push({
           trait: EVOLUTION_TRAITS.LION_KING,
-          sourceId: minionResult.attacker.id,
+          sourceId: minionCombatResult.attacker.id,
           targetId: updatedTarget.id,
           damage: minionHpGain,
         });
       } else {
         traitsTriggered.push({
           trait: EVOLUTION_TRAITS.LION_KING,
-          sourceId: minionResult.attacker.id,
+          sourceId: minionCombatResult.attacker.id,
           targetId: updatedTarget.id,
-          damage: minionResult.damageDealt,
+          damage: minionCombatResult.damageDealt,
         });
       }
-      traitsTriggered.push(...minionResult.traitsTriggered);
+      traitsTriggered.push(...minionCombatResult.traitsTriggered);
 
       applyPostCombatTraitEffects(
         allPlayers,
         traitsTriggered,
-        minionResult.attacker,
-        minionResult.target,
+        minionCombatResult.attacker,
+        minionCombatResult.target,
       );
-      // Ensure updatedTarget is synced into allPlayers
-      allPlayers[minionResult.attacker.id] = { ...minionResult.attacker };
 
-      allPlayers[minionResult.target.id] = { ...minionResult.target };
+      // Ensure updatedTarget is synced into allPlayers
+
+      allPlayers[attacker.id] = { ...attacker };
+      allPlayers[minionCombatResult.attacker.id] = {
+        ...minionCombatResult.attacker,
+      };
+      allPlayers[minionCombatResult.target.id] = {
+        ...minionCombatResult.target,
+      };
     }
   }
+
+  return updatedTarget;
 };
 
 const applyPostCombatTraitEffects = (
@@ -319,13 +332,14 @@ export const processCombatPhase = (
   );
 
   // Reactive traits
-  triggerLionKingTrait(
+  const updatedTarget = triggerLionKingTrait(
     attacker,
     result.target,
     allPlayers,
     game,
     result.traitsTriggered,
   );
+  result.target = { ...updatedTarget };
 
   applyPostCombatTraitEffects(
     allPlayers,
