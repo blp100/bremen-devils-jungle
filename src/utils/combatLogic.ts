@@ -178,16 +178,11 @@ const triggerLionKingTrait = (
       if (minionCombatResult.success) {
         const minionHpGain =
           -minionCombatResult.damageDealt + LION_KING_HEAL_AMOUNT;
-        allPlayers[attacker.id].hp += LION_KING_HEAL_AMOUNT;
-        updatedTarget = { ...minionCombatResult.target };
-        allPlayers[minionCombatResult.attacker.id] = {
-          ...minionCombatResult.attacker,
-          hp: Math.max(
-            0,
-            minionCombatResult.attacker.hp - LION_KING_HEAL_AMOUNT,
-          ),
-          isResting: false,
-        };
+        attacker.hp += LION_KING_HEAL_AMOUNT;
+        minionCombatResult.attacker.hp = Math.max(
+          0,
+          minionCombatResult.attacker.hp - LION_KING_HEAL_AMOUNT,
+        );
 
         traitsTriggered.push({
           trait: EVOLUTION_TRAITS.LION_KING,
@@ -210,6 +205,8 @@ const triggerLionKingTrait = (
           damage: minionCombatResult.damageDealt,
         });
       }
+      minionCombatResult.attacker.isResting = false;
+      updatedTarget = { ...minionCombatResult.target };
       traitsTriggered.push(...minionCombatResult.traitsTriggered);
 
       applyPostCombatTraitEffects(
@@ -352,7 +349,7 @@ export const processCombatPhase = (
 
   // Reactive traits
   const updatedTarget = triggerLionKingTrait(
-    attacker,
+    result.attacker,
     result.target,
     allPlayers,
     game,
