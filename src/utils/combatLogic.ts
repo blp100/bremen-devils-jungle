@@ -105,12 +105,19 @@ const triggerTailRegrowthTrait = (
   updatedAttacker: IPlayer,
   updatedTarget: IPlayer,
   traitsTriggered: ITraitEffectLog[],
+  isMinionCombat: boolean = false,
 ): void => {
+  const tailTraitUsed = isMinionCombat
+    ? updatedTarget.hasUsedMinionTailRegrowth
+    : updatedTarget.hasUsedTailRegrowth;
   if (
     updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.TAIL_REGROWTH) &&
-    updatedTarget.hasUsedTailRegrowth
+    tailTraitUsed
   ) {
     updatedTarget.hasUsedTailRegrowth = false;
+    updatedTarget.hasUsedMinionTailRegrowth = isMinionCombat
+      ? false
+      : updatedTarget.hasUsedMinionTailRegrowth;
     traitsTriggered.push({
       trait: EVOLUTION_TRAITS.TAIL_REGROWTH,
       sourceId: updatedAttacker.id,
@@ -173,6 +180,7 @@ const triggerLionKingTrait = (
         game.damage,
         allPlayers,
         game,
+        true, // isMinionCombat
       );
 
       if (minionCombatResult.success) {
@@ -390,12 +398,17 @@ const resolveDirectCombat = (
   damage: number,
   allPlayers: { [key: string]: IPlayer },
   game: IGame,
+  isMinionCombat: boolean = false,
 ) => {
   const playerCount = Object.keys(allPlayers).length;
   const updatedAttacker = { ...attacker };
   const updatedTarget = { ...target };
 
   const traitsTriggered: ITraitEffectLog[] = [];
+
+  const tailTraitUsed = isMinionCombat
+    ? target.hasUsedMinionTailRegrowth
+    : target.hasUsedTailRegrowth;
 
   applyPreOutcomeEffects(updatedAttacker, updatedTarget);
 
@@ -415,14 +428,13 @@ const resolveDirectCombat = (
 
   if (success) {
     updatedAttacker.hp += damage;
-
     // Check if target used TAIL_REGROWTH trait
     triggerTailRegrowthTrait(updatedAttacker, updatedTarget, traitsTriggered);
     if (
       !(
         updatedTarget.evolutionCards?.includes(
           EVOLUTION_TRAITS.TAIL_REGROWTH,
-        ) && updatedTarget.hasUsedTailRegrowth
+        ) && tailTraitUsed
       )
     ) {
       // Normal damage application

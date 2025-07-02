@@ -24,6 +24,7 @@ export interface IPlayer {
   minionId?: string; // for LION_KING
   parasiticTargetId?: string; // for PARASITIC
   hasUsedTailRegrowth?: boolean; // for TAIL_REGROWTH
+  hasUsedMinionTailRegrowth?: boolean; // for minion attack on TAIL_REGROWTH
 }
 
 export interface IGame {

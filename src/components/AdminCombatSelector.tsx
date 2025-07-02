@@ -38,6 +38,11 @@ interface CombatResult {
   traitsTriggered: any[];
 }
 
+interface TailRegrowthDecisions {
+  main?: boolean;
+  minion?: boolean;
+}
+
 export const AdminCombatSelector = ({
   players,
   game,
@@ -59,10 +64,15 @@ export const AdminCombatSelector = ({
 
   // Tail Regrowth modal state
   const [showTailRegrowthModal, setShowTailRegrowthModal] = useState(false);
+  const [currentTailType, setCurrentTailType] = useState<"main" | "minion">(
+    "main",
+  );
   const [pendingCombat, setPendingCombat] = useState<{
     attacker: IPlayer;
     target: IPlayer;
   } | null>(null);
+  const [tailRegrowthDecisions, setTailRegrowthDecisions] =
+    useState<TailRegrowthDecisions>({});
 
   const sortedPlayers = [...players].sort((a, b) => a.number - b.number);
 
@@ -98,31 +108,54 @@ export const AdminCombatSelector = ({
   const handleReset = () => {
     setAttacker(null);
     setTarget(null);
+    setPendingCombat(null);
+    setTailRegrowthDecisions({});
+    setCurrentTailType("main");
+  };
+
+  // Check if Lion King has a valid minion that would attack the target
+  const hasLionKingMinion = (
+    attackerPlayer: IPlayer,
+    targetPlayer: IPlayer,
+  ) => {
+    if (!attackerPlayer.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING)) {
+      return false;
+    }
+
+    const minionId = attackerPlayer.minionId;
+    if (!minionId || !allPlayers[minionId]) {
+      return false;
+    }
+
+    const minion = allPlayers[minionId];
+    return !minion.isDead && minion.id !== targetPlayer.id;
   };
 
   const handleAttack = async () => {
     if (attacker && target && !isAttacking) {
-      // Check if target has TAIL_REGROWTH trait and hasn't used it yet
+      // Check if target has TAIL_REGROWTH trait
       const hasTailRegrowth = target.evolutionCards?.includes(
         EVOLUTION_TRAITS.TAIL_REGROWTH,
       );
-      const hasUsedTailRegrowth = target.hasUsedTailRegrowth;
 
-      if (hasTailRegrowth && !hasUsedTailRegrowth) {
-        // Show TailRegrowth modal and store pending combat
+      if (hasTailRegrowth) {
+        // Store pending combat and start the modal sequence
         setPendingCombat({ attacker, target });
+        setTailRegrowthDecisions({});
+        setCurrentTailType("main");
         setShowTailRegrowthModal(true);
         return;
       }
 
-      // Proceed with normal combat
-      await executeCombat(attacker, target);
+      // Proceed with normal combat if no tail regrowth
+      await executeCombat(attacker, target, {});
     }
   };
 
   const executeCombat = async (
     attackerPlayer: IPlayer,
     targetPlayer: IPlayer,
+    decisions: TailRegrowthDecisions,
   ) => {
     setIsAttacking(true);
 
@@ -131,9 +164,26 @@ export const AdminCombatSelector = ({
     setOriginalTarget({ ...targetPlayer });
 
     try {
+      // Apply tail regrowth decisions before combat
+      const updatedTarget = { ...targetPlayer };
+
+      if (decisions.main !== undefined) {
+        updatedTarget.hasUsedTailRegrowth = decisions.main;
+        await updateData(`players/${targetPlayer.id}`, {
+          hasUsedTailRegrowth: decisions.main,
+        });
+      }
+
+      if (decisions.minion !== undefined) {
+        updatedTarget.hasUsedMinionTailRegrowth = decisions.minion;
+        await updateData(`players/${targetPlayer.id}`, {
+          hasUsedTailRegrowth: decisions.minion,
+        });
+      }
+
       const result = await handlePlayerAttack(
         attackerPlayer,
-        targetPlayer,
+        updatedTarget,
         allPlayers,
         game,
       );
@@ -151,42 +201,59 @@ export const AdminCombatSelector = ({
     }
   };
 
-  const handleTailRegrowthConfirm = async () => {
+  const handleTailRegrowthConfirm = () => {
     if (!pendingCombat) return;
 
-    try {
-      // Update target player to mark trait as used
-      await updateData(`players/${pendingCombat.target.id}`, {
-        hasUsedTailRegrowth: true,
-      });
+    const newDecisions = {
+      ...tailRegrowthDecisions,
+      [currentTailType]: true,
+    };
+    setTailRegrowthDecisions(newDecisions);
 
-      toast.success(`${pendingCombat.target.nickname} 使用了斷尾求生`);
-
-      // Close modal and proceed with combat
-      setShowTailRegrowthModal(false);
-
-      // Get updated target data and proceed with combat
-      const updatedTarget = {
-        ...pendingCombat.target,
-        hasUsedTailRegrowth: true,
-      };
-
-      await executeCombat(pendingCombat.attacker, updatedTarget);
-      setPendingCombat(null);
-    } catch (error) {
-      toast.error("使用斷尾求生失敗");
-      console.error("Error using tail regrowth:", error);
+    // Check if we need to show minion modal next
+    if (
+      currentTailType === "main" &&
+      hasLionKingMinion(pendingCombat.attacker, pendingCombat.target)
+    ) {
+      setCurrentTailType("minion");
+      // Keep modal open but switch to minion type
+      return;
     }
+
+    // All modals completed, proceed with combat
+    setShowTailRegrowthModal(false);
+
+    const message =
+      currentTailType === "main"
+        ? `${pendingCombat.target.nickname} 使用了斷尾求生`
+        : `${pendingCombat.target.nickname} 使用了斷尾求生對抗手下攻擊`;
+
+    toast.success(message);
+    executeCombat(pendingCombat.attacker, pendingCombat.target, newDecisions);
   };
 
   const handleTailRegrowthCancel = () => {
     if (!pendingCombat) return;
 
-    // Proceed with normal combat without using the trait
-    executeCombat(pendingCombat.attacker, pendingCombat.target);
+    const newDecisions = {
+      ...tailRegrowthDecisions,
+      [currentTailType]: false,
+    };
+    setTailRegrowthDecisions(newDecisions);
 
+    // Check if we need to show minion modal next
+    if (
+      currentTailType === "main" &&
+      hasLionKingMinion(pendingCombat.attacker, pendingCombat.target)
+    ) {
+      setCurrentTailType("minion");
+      // Keep modal open but switch to minion type
+      return;
+    }
+
+    // All modals completed, proceed with combat
     setShowTailRegrowthModal(false);
-    setPendingCombat(null);
+    executeCombat(pendingCombat.attacker, pendingCombat.target, newDecisions);
   };
 
   const handleCombatResultConfirm = () => {
@@ -266,6 +333,7 @@ export const AdminCombatSelector = ({
       setIsResetting(false);
     }
   };
+
   return (
     <>
       <div className="space-y-6">
@@ -538,6 +606,7 @@ export const AdminCombatSelector = ({
           </Button>
         </div>
       </div>
+
       {/* Combat Result Modal */}
       <CombatResultModal
         isOpen={showResultModal}
@@ -547,12 +616,14 @@ export const AdminCombatSelector = ({
         originalTarget={originalTarget}
         allPlayers={allPlayers}
       />
+
       {/* Tail Regrowth Modal */}
       <TailRegrowthModal
         isOpen={showTailRegrowthModal}
         onConfirm={handleTailRegrowthConfirm}
         onCancel={handleTailRegrowthCancel}
         player={pendingCombat?.target || null}
+        tailType={currentTailType}
       />
     </>
   );
