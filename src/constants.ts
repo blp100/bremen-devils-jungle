@@ -33,6 +33,13 @@ export const CORE_PLAYER_TYPES = [
 
 export const OPTIONAL_PLAYER_TYPE = PLAYER_TYPE.ELECTRIC;
 
+export const PLAYER_TYPE_LABELS: Record<PLAYER_TYPE, string> = {
+  [PLAYER_TYPE.FIRE]: "火",
+  [PLAYER_TYPE.WATER]: "水",
+  [PLAYER_TYPE.WOOD]: "木",
+  [PLAYER_TYPE.ELECTRIC]: "電",
+};
+
 export enum EVOLUTION_TRAITS {
   // First Round Evolution
   GENE_MUTATION = "Gene Mutation", // During the evolution phase, costs 3 less HP.
@@ -54,6 +61,64 @@ export enum EVOLUTION_TRAITS {
   HIBERNATION = "Hibernation", // During the attack phase, if the owner's attack succeeds, they cannot be targeted for the rest of the phase.
   SCAVENGER = "Scavenger", // During any phase, whenever a player dies, the owner gains 4 HP.
 }
+
+export const TRAIT_LABELS: Record<EVOLUTION_TRAITS, string> = {
+  [EVOLUTION_TRAITS.GENE_MUTATION]: "基因突變",
+  [EVOLUTION_TRAITS.DEADLY_POISON]: "劇毒",
+  [EVOLUTION_TRAITS.BLOODTHIRSTY]: "嗜血",
+  [EVOLUTION_TRAITS.SHARP_SPIKES]: "尖刺",
+  [EVOLUTION_TRAITS.HORUS_EYE]: "荷魯斯之眼",
+  [EVOLUTION_TRAITS.AMPHIBIOUS]: "兩棲",
+  [EVOLUTION_TRAITS.PARASITIC]: "寄生",
+  [EVOLUTION_TRAITS.FOREST_SCEPTER]: "森林權杖",
+  [EVOLUTION_TRAITS.TAIL_REGROWTH]: "斷尾求生",
+  [EVOLUTION_TRAITS.SPECIES_EXTINCTION]: "物種滅絕",
+  [EVOLUTION_TRAITS.LION_KING]: "獅子王",
+  [EVOLUTION_TRAITS.FIERCE_GAZE]: "兇狠目光",
+  [EVOLUTION_TRAITS.HIBERNATION]: "冬眠",
+  [EVOLUTION_TRAITS.SCAVENGER]: "食腐",
+};
+
+export const TRAIT_DESCRIPTIONS: Record<EVOLUTION_TRAITS, string> = {
+  [EVOLUTION_TRAITS.GENE_MUTATION]: "進化階段消耗減少3點血量",
+  [EVOLUTION_TRAITS.DEADLY_POISON]: "死亡時攻擊者也會死亡",
+  [EVOLUTION_TRAITS.BLOODTHIRSTY]: "戰鬥時勝者額外獲得2血量，敗者額外失去2血量",
+  [EVOLUTION_TRAITS.SHARP_SPIKES]: "被攻擊時攻擊者先失去2血量",
+  [EVOLUTION_TRAITS.HORUS_EYE]: "討論階段可查看其他玩家血量",
+  [EVOLUTION_TRAITS.AMPHIBIOUS]: "可攻擊同元素玩家",
+  [EVOLUTION_TRAITS.PARASITIC]: "寄生目標獲得血量時自己也獲得相同血量",
+  [EVOLUTION_TRAITS.FOREST_SCEPTER]: "可決定攻擊順序",
+  [EVOLUTION_TRAITS.TAIL_REGROWTH]: "可棄2張攻擊卡保留血量",
+  [EVOLUTION_TRAITS.SPECIES_EXTINCTION]:
+    "可移除特定元素所有玩家5血量（限一次）",
+  [EVOLUTION_TRAITS.LION_KING]: "可指定一名手下，攻擊時手下也會攻擊",
+  [EVOLUTION_TRAITS.FIERCE_GAZE]: "可不使用攻擊卡進行攻擊",
+  [EVOLUTION_TRAITS.HIBERNATION]: "攻擊成功後本階段無法被攻擊",
+  [EVOLUTION_TRAITS.SCAVENGER]: "任何玩家死亡時獲得4血量",
+};
+
+export const ROUND_TRAIT_MAP: Record<number, EVOLUTION_TRAITS[]> = {
+  1: [
+    EVOLUTION_TRAITS.GENE_MUTATION,
+    EVOLUTION_TRAITS.DEADLY_POISON,
+    EVOLUTION_TRAITS.BLOODTHIRSTY,
+    EVOLUTION_TRAITS.SHARP_SPIKES,
+    EVOLUTION_TRAITS.HORUS_EYE,
+  ],
+  2: [
+    EVOLUTION_TRAITS.AMPHIBIOUS,
+    EVOLUTION_TRAITS.PARASITIC,
+    EVOLUTION_TRAITS.FOREST_SCEPTER,
+    EVOLUTION_TRAITS.TAIL_REGROWTH,
+    EVOLUTION_TRAITS.SPECIES_EXTINCTION,
+  ],
+  3: [
+    EVOLUTION_TRAITS.LION_KING,
+    EVOLUTION_TRAITS.FIERCE_GAZE,
+    EVOLUTION_TRAITS.HIBERNATION,
+    EVOLUTION_TRAITS.SCAVENGER,
+  ],
+};
 
 export enum GAME_STAGE_TYPE {
   DISCUSSION = "discussion",

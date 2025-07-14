@@ -15,6 +15,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { IPlayer } from "@/interfaces";
 import { EVOLUTION_TRAITS } from "@/constants";
+import {
+  getTraitLabel,
+  getPlayerTypeLabel,
+  getTraitDescription,
+  getAvailableTraits,
+} from "@/utils/labelHelper";
 import { updateData } from "@/services/firebaseHelpers";
 import {
   Check,
@@ -40,32 +46,6 @@ interface AdminTraitAssignmentProps {
   currentRound: number;
 }
 
-// Chinese trait name mapping
-const TRAIT_LABELS: Record<string, string> = {
-  [EVOLUTION_TRAITS.GENE_MUTATION]: "基因突變",
-  [EVOLUTION_TRAITS.DEADLY_POISON]: "劇毒",
-  [EVOLUTION_TRAITS.BLOODTHIRSTY]: "嗜血",
-  [EVOLUTION_TRAITS.SHARP_SPIKES]: "尖刺",
-  [EVOLUTION_TRAITS.HORUS_EYE]: "赫魯斯之眼",
-  [EVOLUTION_TRAITS.AMPHIBIOUS]: "兩棲",
-  [EVOLUTION_TRAITS.PARASITIC]: "寄生",
-  [EVOLUTION_TRAITS.FOREST_SCEPTER]: "森林權杖",
-  [EVOLUTION_TRAITS.TAIL_REGROWTH]: "斷尾",
-  [EVOLUTION_TRAITS.SPECIES_EXTINCTION]: "物種消亡",
-  [EVOLUTION_TRAITS.LION_KING]: "獅子王",
-  [EVOLUTION_TRAITS.FIERCE_GAZE]: "兇狠目光",
-  [EVOLUTION_TRAITS.HIBERNATION]: "冬眠",
-  [EVOLUTION_TRAITS.SCAVENGER]: "食腐",
-};
-
-// Player type Chinese labels
-const PLAYER_TYPE_LABELS: Record<string, string> = {
-  fire: "火",
-  water: "水",
-  wood: "木",
-  electric: "電",
-};
-
 export const AdminTraitAssignment = ({
   players,
   currentRound,
@@ -80,46 +60,8 @@ export const AdminTraitAssignment = ({
     [playerId: string]: boolean;
   }>({});
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
-  const [targetPlayers, setTargetPlayers] = useState<{
-    [playerId: string]: string;
-  }>({});
-
-  // Get available traits based on current round
-  const getAvailableTraits = (round: number) => {
-    switch (round) {
-      case 1:
-        return [
-          EVOLUTION_TRAITS.GENE_MUTATION,
-          EVOLUTION_TRAITS.DEADLY_POISON,
-          EVOLUTION_TRAITS.BLOODTHIRSTY,
-          EVOLUTION_TRAITS.SHARP_SPIKES,
-          EVOLUTION_TRAITS.HORUS_EYE,
-        ];
-      case 2:
-        return [
-          EVOLUTION_TRAITS.AMPHIBIOUS,
-          EVOLUTION_TRAITS.PARASITIC,
-          EVOLUTION_TRAITS.FOREST_SCEPTER,
-          EVOLUTION_TRAITS.TAIL_REGROWTH,
-          EVOLUTION_TRAITS.SPECIES_EXTINCTION,
-        ];
-      case 3:
-        return [
-          EVOLUTION_TRAITS.LION_KING,
-          EVOLUTION_TRAITS.FIERCE_GAZE,
-          EVOLUTION_TRAITS.HIBERNATION,
-          EVOLUTION_TRAITS.SCAVENGER,
-        ];
-      default:
-        return [];
-    }
-  };
 
   const availableTraits = getAvailableTraits(currentRound);
-
-  const getPlayerTypeLabel = (type: string) => {
-    return PLAYER_TYPE_LABELS[type] || type;
-  };
 
   // Create a map of which traits are already assigned to which players
   const assignedTraitsMap = useMemo(() => {
@@ -155,14 +97,6 @@ export const AdminTraitAssignment = ({
     return playerId ? players[playerId] : null;
   };
 
-  // Check if a trait requires a target player
-  const traitRequiresTarget = (trait: string): boolean => {
-    return (
-      trait === EVOLUTION_TRAITS.LION_KING ||
-      trait === EVOLUTION_TRAITS.PARASITIC
-    );
-  };
-
   const handlePlayerClick = (playerId: string) => {
     const player = players[playerId];
     if (player.isDead) return; // Don't allow expanding dead players
@@ -171,7 +105,7 @@ export const AdminTraitAssignment = ({
       setExpandedPlayer(null);
     } else {
       setExpandedPlayer(playerId);
-      // Clear any selected trait, HP deduction, and target player when switching players
+      // Clear any selected trait and HP deduction when switching players
       if (selectedTraits[playerId]) {
         setSelectedTraits((prev) => {
           const updated = { ...prev };
@@ -181,13 +115,6 @@ export const AdminTraitAssignment = ({
       }
       if (hpDeductions[playerId] !== undefined) {
         setHpDeductions((prev) => {
-          const updated = { ...prev };
-          delete updated[playerId];
-          return updated;
-        });
-      }
-      if (targetPlayers[playerId] !== undefined) {
-        setTargetPlayers((prev) => {
           const updated = { ...prev };
           delete updated[playerId];
           return updated;
@@ -206,22 +133,6 @@ export const AdminTraitAssignment = ({
       ...prev,
       [playerId]: 0,
     }));
-    // Reset target player when trait changes
-    setTargetPlayers((prev) => {
-      const updated = { ...prev };
-      delete updated[playerId];
-      return updated;
-    });
-  };
-
-  const handleTargetPlayerSelect = (
-    playerId: string,
-    targetPlayerId: string,
-  ) => {
-    setTargetPlayers((prev) => ({
-      ...prev,
-      [playerId]: targetPlayerId,
-    }));
   };
 
   const handleHpDeductionChange = (playerId: string, value: number) => {
@@ -237,9 +148,8 @@ export const AdminTraitAssignment = ({
   };
 
   const handleAssignTrait = async (playerId: string) => {
-    const selectedTrait = selectedTraits[playerId];
+    const selectedTrait = selectedTraits[playerId] as EVOLUTION_TRAITS;
     const hpDeduction = hpDeductions[playerId] || 0;
-    const targetPlayerId = targetPlayers[playerId];
 
     if (!selectedTrait) {
       toast.error("請先選擇一個性狀");
@@ -260,7 +170,7 @@ export const AdminTraitAssignment = ({
     // Check if player already has this trait
     if (player.evolutionCards?.includes(selectedTrait)) {
       toast.error(
-        `${player.nickname} 已經擁有 ${TRAIT_LABELS[selectedTrait]} 性狀`,
+        `${player.nickname} 已經擁有 ${getTraitLabel(selectedTrait)} 性狀`,
       );
       return;
     }
@@ -269,14 +179,8 @@ export const AdminTraitAssignment = ({
     if (isTraitAssignedToAnyPlayer(selectedTrait, playerId)) {
       const assignedPlayer = getPlayerWithTrait(selectedTrait);
       toast.error(
-        `${TRAIT_LABELS[selectedTrait]} 性狀已分配給 ${assignedPlayer?.nickname}`,
+        `${getTraitLabel(selectedTrait)} 性狀已分配給 ${assignedPlayer?.nickname}`,
       );
-      return;
-    }
-
-    // Check if target player is required but not selected
-    if (traitRequiresTarget(selectedTrait) && !targetPlayerId) {
-      toast.error(`${TRAIT_LABELS[selectedTrait]} 性狀需要選擇目標玩家`);
       return;
     }
 
@@ -306,17 +210,10 @@ export const AdminTraitAssignment = ({
         isDead: newHp <= 0,
       };
 
-      // Add target player ID for special traits
-      if (selectedTrait === EVOLUTION_TRAITS.LION_KING) {
-        updatePayload.minionId = targetPlayerId;
-      } else if (selectedTrait === EVOLUTION_TRAITS.PARASITIC) {
-        updatePayload.parasiticTargetId = targetPlayerId;
-      }
-
       await updateData(`players/${playerId}`, updatePayload);
 
       // Create success message
-      let message = `已為 ${player.nickname} 分配 ${TRAIT_LABELS[selectedTrait]} 性狀`;
+      let message = `已為 ${player.nickname} 分配 ${getTraitLabel(selectedTrait)} 性狀`;
 
       if (finalHpDeduction > 0) {
         message += ` 並扣除 ${finalHpDeduction} 點血量`;
@@ -326,28 +223,19 @@ export const AdminTraitAssignment = ({
         message += `（基因突變減少 ${geneticMutationReduction} 點傷害）`;
       }
 
-      if (targetPlayerId) {
-        message += ` 目標為 ${players[targetPlayerId].nickname}`;
-      }
-
       if (newHp <= 0) {
         message += ` - 玩家已死亡`;
       }
 
       toast.success(message);
 
-      // Clear the selected trait, HP deduction, target player and collapse the player
+      // Clear the selected trait, HP deduction and collapse the player
       setSelectedTraits((prev) => {
         const updated = { ...prev };
         delete updated[playerId];
         return updated;
       });
       setHpDeductions((prev) => {
-        const updated = { ...prev };
-        delete updated[playerId];
-        return updated;
-      });
-      setTargetPlayers((prev) => {
         const updated = { ...prev };
         delete updated[playerId];
         return updated;
@@ -359,32 +247,6 @@ export const AdminTraitAssignment = ({
     } finally {
       setAssigningTraits((prev) => ({ ...prev, [playerId]: false }));
     }
-  };
-
-  const getTraitDescription = (trait: string) => {
-    const descriptions: Record<EVOLUTION_TRAITS, string> = {
-      [EVOLUTION_TRAITS.GENE_MUTATION]: "進化階段消耗減少3點血量",
-      [EVOLUTION_TRAITS.DEADLY_POISON]: "死亡時攻擊者也會死亡",
-      [EVOLUTION_TRAITS.BLOODTHIRSTY]:
-        "戰鬥時勝者額外獲得2血量，敗者額外失去2血量",
-      [EVOLUTION_TRAITS.SHARP_SPIKES]: "被攻擊時攻擊者先失去2血量",
-      [EVOLUTION_TRAITS.HORUS_EYE]: "討論階段可查看其他玩家血量",
-      [EVOLUTION_TRAITS.AMPHIBIOUS]: "可攻擊同元素玩家",
-      [EVOLUTION_TRAITS.PARASITIC]: "寄生目標獲得血量時自己也獲得相同血量",
-      [EVOLUTION_TRAITS.FOREST_SCEPTER]: "可決定攻擊順序",
-      [EVOLUTION_TRAITS.TAIL_REGROWTH]: "可棄2張攻擊卡保留血量",
-      [EVOLUTION_TRAITS.SPECIES_EXTINCTION]:
-        "可移除特定元素所有玩家5血量（限一次）",
-      [EVOLUTION_TRAITS.LION_KING]: "可指定一名手下，攻擊時手下也會攻擊",
-      [EVOLUTION_TRAITS.FIERCE_GAZE]: "可不使用攻擊卡進行攻擊",
-      [EVOLUTION_TRAITS.HIBERNATION]: "攻擊成功後本階段無法被攻擊",
-      [EVOLUTION_TRAITS.SCAVENGER]: "任何玩家死亡時獲得4血量",
-    };
-    return descriptions[trait as EVOLUTION_TRAITS] || "";
-  };
-
-  const getTraitLabel = (trait: string) => {
-    return TRAIT_LABELS[trait] || trait;
   };
 
   const getTraitIcon = (trait: string) => {
@@ -436,12 +298,6 @@ export const AdminTraitAssignment = ({
                 const isAssigning = assigningTraits[player.id];
                 const selectedTrait = selectedTraits[player.id];
                 const hpDeduction = hpDeductions[player.id] || 0;
-                const needsTarget =
-                  !!selectedTrait && traitRequiresTarget(selectedTrait);
-                const targetPlayerId = targetPlayers[player.id];
-                const targetPlayer = targetPlayerId
-                  ? players[targetPlayerId]
-                  : null;
 
                 // Calculate final HP deduction with GENETIC_MUTATION effect
                 let finalHpDeduction = hpDeduction;
@@ -703,86 +559,6 @@ export const AdminTraitAssignment = ({
                               </SelectContent>
                             </Select>
 
-                            {/* Target Player Selection - Only for LION_KING and PARASITIC */}
-                            {needsTarget && (
-                              <div className="space-y-3 mt-4">
-                                <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                                  {selectedTrait ===
-                                  EVOLUTION_TRAITS.LION_KING ? (
-                                    <>
-                                      <Crown className="h-4 w-4" />
-                                      選擇手下：
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Bug className="h-4 w-4" />
-                                      選擇寄生目標：
-                                    </>
-                                  )}
-                                </div>
-
-                                <Select
-                                  value={targetPlayers[player.id] || ""}
-                                  onValueChange={(value) =>
-                                    handleTargetPlayerSelect(player.id, value)
-                                  }
-                                >
-                                  <SelectTrigger className="min-h-[44px]">
-                                    <SelectValue placeholder="選擇目標玩家..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {playerList
-                                      .filter(
-                                        (p) =>
-                                          p.id !== player.id &&
-                                          p.hp > 0 &&
-                                          !p.isDead,
-                                      )
-                                      .map((targetPlayer) => (
-                                        <SelectItem
-                                          key={targetPlayer.id}
-                                          value={targetPlayer.id}
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-medium">
-                                              {targetPlayer.number}{" "}
-                                              {targetPlayer.nickname}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">
-                                              ({targetPlayer.type} • HP:{" "}
-                                              {targetPlayer.hp})
-                                            </span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                  </SelectContent>
-                                </Select>
-
-                                {targetPlayer && (
-                                  <div className="text-sm bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800">
-                                    <div className="flex items-center gap-2">
-                                      {selectedTrait ===
-                                      EVOLUTION_TRAITS.LION_KING ? (
-                                        <Crown className="h-4 w-4 text-amber-500" />
-                                      ) : (
-                                        <Bug className="h-4 w-4 text-green-600" />
-                                      )}
-                                      <span className="font-medium">
-                                        已選擇：{targetPlayer.number}{" "}
-                                        {targetPlayer.nickname}
-                                      </span>
-                                    </div>
-                                    <div className="mt-1 text-xs text-muted-foreground">
-                                      {selectedTrait ===
-                                      EVOLUTION_TRAITS.LION_KING
-                                        ? "此玩家將成為你的手下，你攻擊時他也會攻擊同一目標"
-                                        : "當此玩家獲得血量時，你也會獲得相同血量"}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
                             {/* HP Deduction Input - Only show when trait is selected */}
                             {selectedTrait && (
                               <div className="space-y-3 mt-4">
@@ -797,7 +573,7 @@ export const AdminTraitAssignment = ({
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="h-10 w-10 rounded-md flex items-center justify-center"
+                                    className="h-10 w-10 rounded-md flex items-center justify-center bg-transparent"
                                     onClick={() =>
                                       handleHpDeductionChange(
                                         player.id,
@@ -825,7 +601,7 @@ export const AdminTraitAssignment = ({
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="h-10 w-10 rounded-md flex items-center justify-center"
+                                    className="h-10 w-10 rounded-md flex items-center justify-center bg-transparent"
                                     onClick={() =>
                                       handleHpDeductionChange(
                                         player.id,
@@ -897,7 +673,6 @@ export const AdminTraitAssignment = ({
                               disabled={
                                 !selectedTraits[player.id] ||
                                 isAssigning ||
-                                (needsTarget && !targetPlayers[player.id]) ||
                                 player.isDead
                               }
                               className="w-full min-h-[44px] mt-4"
@@ -916,8 +691,6 @@ export const AdminTraitAssignment = ({
                                     {selectedTrait &&
                                       finalHpDeduction > 0 &&
                                       ` (扣除 ${finalHpDeduction} HP)`}
-                                    {targetPlayer &&
-                                      ` (目標: ${targetPlayer.nickname})`}
                                     {resultingHp <= 0 && " - 玩家將死亡"}
                                   </span>
                                 </div>
@@ -929,7 +702,10 @@ export const AdminTraitAssignment = ({
                           {selectedTraits[player.id] && (
                             <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded border">
                               <strong>
-                                {getTraitLabel(selectedTraits[player.id])}：
+                                {getTraitLabel(
+                                  selectedTraits[player.id] as EVOLUTION_TRAITS,
+                                )}
+                                ：
                               </strong>
                               {getTraitDescription(selectedTraits[player.id])}
                             </div>

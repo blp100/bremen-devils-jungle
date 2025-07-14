@@ -1,38 +1,138 @@
-import { IPlayer, IGame, ITraitEffectLog } from "@/interfaces";
+import type { IPlayer, IGame, ITraitEffectLog } from "@/interfaces";
 import { EVOLUTION_TRAITS, PLAYER_TYPE } from "@/constants";
 
-const triggerParasiticEffect = (
-  host: IPlayer,
-  hpGained: number,
+const BLOODTHIRSTY_ADDITIONAL_AMOUNT = 2;
+const LION_KING_HEAL_AMOUNT = 3;
+
+const updateDeathStatus = (player: IPlayer) => {
+  if (player.hp <= 0) {
+    player.hp = 0;
+    player.isDead = true;
+  }
+};
+
+/** Trait trigger handlers */
+const triggerParasiticTrait = (
   allPlayers: { [key: string]: IPlayer },
+  previousHp: Record<string, number>,
   traitsTriggered: ITraitEffectLog[],
 ) => {
   for (const parasiteId in allPlayers) {
     const parasite = allPlayers[parasiteId];
+    const hostId = parasite.parasiticTargetId ?? "";
+
     if (
       parasite.evolutionCards?.includes(EVOLUTION_TRAITS.PARASITIC) &&
-      parasite.parasiticTargetId === host.id
+      hostId &&
+      allPlayers[hostId]
     ) {
-      parasite.hp += hpGained;
+      const hpBefore = previousHp[hostId] ?? 0;
+      const hpAfter = allPlayers[hostId].hp;
+      const diff = hpAfter - hpBefore;
 
-      traitsTriggered.push({
-        trait: EVOLUTION_TRAITS.PARASITIC,
-        sourceId: parasite.id,
-        targetId: host.id,
-        damage: -hpGained,
-        note: `PARASITIC: ${parasite.nickname} leeched ${hpGained} HP from ${host.nickname}`,
-      });
+      if (diff > 0) {
+        parasite.hp += diff;
+        traitsTriggered.push({
+          trait: EVOLUTION_TRAITS.PARASITIC,
+          sourceId: parasite.id,
+          targetId: hostId,
+          damage: -diff,
+        });
+      }
     }
   }
 };
 
-const applyPostCombatTraitEffects = (
+const triggerSharpSpikesTrait = (attacker: IPlayer, target: IPlayer): void => {
+  if (target.evolutionCards?.includes(EVOLUTION_TRAITS.SHARP_SPIKES)) {
+    attacker.hp = Math.max(0, attacker.hp - 2);
+  }
+};
+
+const triggerBloodthirstyTrait = (
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
+  success: boolean,
+  traitsTriggered: ITraitEffectLog[],
+): void => {
+  if (
+    updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY) ||
+    updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY)
+  ) {
+    const victor = success ? updatedAttacker : updatedTarget;
+    const loser = success ? updatedTarget : updatedAttacker;
+
+    victor.hp += BLOODTHIRSTY_ADDITIONAL_AMOUNT;
+    loser.hp = Math.max(0, loser.hp - BLOODTHIRSTY_ADDITIONAL_AMOUNT);
+
+    traitsTriggered.push({
+      trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
+      sourceId: victor.id,
+      targetId: loser.id,
+      damage: BLOODTHIRSTY_ADDITIONAL_AMOUNT,
+    });
+  }
+};
+
+const triggerDeadlyPoisonTrait = (
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
+  traitsTriggered: ITraitEffectLog[],
+): void => {
+  if (
+    updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.DEADLY_POISON) &&
+    updatedTarget.hp === 0
+  ) {
+    updatedAttacker.hp = 0;
+    updateDeathStatus(updatedAttacker);
+
+    traitsTriggered.push({
+      trait: EVOLUTION_TRAITS.DEADLY_POISON,
+      sourceId: updatedTarget.id,
+      targetId: updatedAttacker.id,
+      damage: updatedAttacker.hp,
+    });
+  }
+};
+
+const triggerHibernationTrait = (updatedAttacker: IPlayer): void => {
+  if (updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.HIBERNATION)) {
+    updatedAttacker.protected = true;
+  }
+};
+
+const triggerTailRegrowthTrait = (
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
+  traitsTriggered: ITraitEffectLog[],
+  isMinionCombat: boolean = false,
+): void => {
+  const tailTraitUsed = isMinionCombat
+    ? updatedTarget.hasUsedMinionTailRegrowth
+    : updatedTarget.hasUsedTailRegrowth;
+  if (
+    updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.TAIL_REGROWTH) &&
+    tailTraitUsed
+  ) {
+    updatedTarget.hasUsedTailRegrowth = false;
+    updatedTarget.hasUsedMinionTailRegrowth = isMinionCombat
+      ? false
+      : updatedTarget.hasUsedMinionTailRegrowth;
+    traitsTriggered.push({
+      trait: EVOLUTION_TRAITS.TAIL_REGROWTH,
+      sourceId: updatedAttacker.id,
+      targetId: updatedTarget.id,
+      damage: 0,
+    });
+  }
+};
+
+const triggerScavengerTrait = (
   allPlayers: { [key: string]: IPlayer },
   traitsTriggered: ITraitEffectLog[],
   updatedAttacker: IPlayer,
   updatedTarget: IPlayer,
-) => {
-  // Scavenger
+): void => {
   const someoneDied = updatedAttacker.hp === 0 || updatedTarget.hp === 0;
 
   for (const playerId in allPlayers) {
@@ -44,25 +144,144 @@ const applyPostCombatTraitEffects = (
     ) {
       player.hp += 4;
 
-      triggerParasiticEffect(player, 4, allPlayers, traitsTriggered);
-
       traitsTriggered.push({
         trait: EVOLUTION_TRAITS.SCAVENGER,
         sourceId: player.id,
         targetId:
           updatedAttacker.hp === 0 ? updatedAttacker.id : updatedTarget.id,
         damage: -4,
-        note: `SCAVENGER: ${player.nickname} scavenged 4 HP from the death of ${updatedAttacker.hp === 0 ? updatedAttacker.nickname : updatedTarget.nickname}`,
       });
     }
   }
 };
 
-const updateDeathStatus = (player: IPlayer) => {
-  if (player.hp <= 0) {
-    player.hp = 0;
-    player.isDead = true;
+const triggerLionKingTrait = (
+  attacker: IPlayer,
+  target: IPlayer,
+  allPlayers: { [key: string]: IPlayer },
+  game: IGame,
+  traitsTriggered: ITraitEffectLog[],
+): IPlayer => {
+  let updatedTarget = { ...target };
+
+  for (const playerId in allPlayers) {
+    const minion = allPlayers[playerId];
+
+    if (
+      attacker.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING) &&
+      attacker.minionId === minion.id &&
+      minion.id !== target.id &&
+      !minion.isDead
+    ) {
+      const minionCombatResult = resolveDirectCombat(
+        minion,
+        target,
+        game.maxElementCount,
+        game.damage,
+        allPlayers,
+        game,
+        true, // isMinionCombat
+      );
+
+      if (minionCombatResult.success) {
+        const minionHpGain =
+          -minionCombatResult.damageDealt + LION_KING_HEAL_AMOUNT;
+        attacker.hp += LION_KING_HEAL_AMOUNT;
+        minionCombatResult.attacker.hp = Math.max(
+          0,
+          minionCombatResult.attacker.hp - LION_KING_HEAL_AMOUNT,
+        );
+
+        traitsTriggered.push({
+          trait: EVOLUTION_TRAITS.LION_KING,
+          sourceId: attacker.id,
+          targetId: updatedTarget.id,
+          damage: -LION_KING_HEAL_AMOUNT,
+        });
+
+        traitsTriggered.push({
+          trait: EVOLUTION_TRAITS.LION_KING,
+          sourceId: minionCombatResult.attacker.id,
+          targetId: updatedTarget.id,
+          damage: minionHpGain,
+        });
+      } else {
+        traitsTriggered.push({
+          trait: EVOLUTION_TRAITS.LION_KING,
+          sourceId: minionCombatResult.attacker.id,
+          targetId: updatedTarget.id,
+          damage: minionCombatResult.damageDealt,
+        });
+      }
+      minionCombatResult.attacker.isResting = false;
+      updatedTarget = { ...minionCombatResult.target };
+      traitsTriggered.push(...minionCombatResult.traitsTriggered);
+
+      applyPostCombatTraitEffects(
+        allPlayers,
+        traitsTriggered,
+        minionCombatResult.attacker,
+        minionCombatResult.target,
+      );
+
+      // Ensure updatedTarget is synced into allPlayers
+
+      allPlayers[attacker.id] = { ...attacker };
+      allPlayers[minionCombatResult.attacker.id] = {
+        ...minionCombatResult.attacker,
+      };
+      allPlayers[minionCombatResult.target.id] = {
+        ...minionCombatResult.target,
+      };
+    }
   }
+
+  return updatedTarget;
+};
+
+const applyPostCombatTraitEffects = (
+  allPlayers: { [key: string]: IPlayer },
+  traitsTriggered: ITraitEffectLog[],
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
+) => {
+  triggerScavengerTrait(
+    allPlayers,
+    traitsTriggered,
+    updatedAttacker,
+    updatedTarget,
+  );
+};
+
+/**
+ * Apply evolution trait effects that occur before the combat result is determined.
+ * Example: SHARP_SPIKES — attacker takes damage before attacking.
+ */
+const applyPreOutcomeEffects = (
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
+) => {
+  triggerSharpSpikesTrait(updatedAttacker, updatedTarget);
+};
+
+/**
+ * Apply evolution trait effects that occur after combat.
+ */
+const applyAfterCombatEffects = (
+  updatedAttacker: IPlayer,
+  updatedTarget: IPlayer,
+  success: boolean,
+  traitsTriggered: ITraitEffectLog[],
+  _allPlayers: { [key: string]: IPlayer },
+) => {
+  triggerBloodthirstyTrait(
+    updatedAttacker,
+    updatedTarget,
+    success,
+    traitsTriggered,
+  );
+  triggerDeadlyPoisonTrait(updatedAttacker, updatedTarget, traitsTriggered);
+  triggerHibernationTrait(updatedAttacker);
 };
 
 export const processCombatPhase = (
@@ -79,6 +298,12 @@ export const processCombatPhase = (
   players: { [key: string]: IPlayer };
   traitsTriggered: ITraitEffectLog[];
 } => {
+  // Record all players' hp at begging of combat
+  const previousHp: Record<string, number> = {};
+  Object.keys(allPlayers).forEach((id) => {
+    previousHp[id] = allPlayers[id].hp;
+  });
+
   // Prevent attacking dead players or attacking as a dead player
   if (attacker.isDead) {
     return {
@@ -131,52 +356,14 @@ export const processCombatPhase = (
   );
 
   // Reactive traits
-  if (result.success) {
-    for (const playerId in allPlayers) {
-      const player = allPlayers[playerId];
-
-      // LION_KING: trigger minion follow-up attack
-      if (
-        attacker.evolutionCards?.includes(EVOLUTION_TRAITS.LION_KING) &&
-        attacker.minionId === player.id &&
-        player.id !== target.id &&
-        !player.isDead
-      ) {
-        const minionResult = resolveDirectCombat(
-          player,
-          result.target,
-          game.maxElementCount,
-          game.damage,
-          allPlayers,
-          game,
-        );
-
-        result.damageDealt += minionResult.damageDealt;
-        result.traitsTriggered.push(...minionResult.traitsTriggered);
-        if (minionResult.success) {
-          result.attacker.hp += 3;
-          result.target.hp = minionResult.target.hp;
-          minionResult.attacker.hp = Math.max(0, minionResult.attacker.hp - 3);
-
-          allPlayers[minionResult.attacker.id] = { ...minionResult.attacker };
-
-          triggerParasiticEffect(
-            attacker,
-            3,
-            allPlayers,
-            result.traitsTriggered,
-          );
-        }
-        result.target = minionResult.target; // Update target state after minion attack
-        applyPostCombatTraitEffects(
-          allPlayers,
-          result.traitsTriggered,
-          minionResult.attacker,
-          minionResult.target,
-        );
-      }
-    }
-  }
+  const updatedTarget = triggerLionKingTrait(
+    result.attacker,
+    result.target,
+    allPlayers,
+    game,
+    result.traitsTriggered,
+  );
+  result.target = { ...updatedTarget };
 
   applyPostCombatTraitEffects(
     allPlayers,
@@ -196,6 +383,8 @@ export const processCombatPhase = (
     ...result.target,
   };
 
+  triggerParasiticTrait(allPlayers, previousHp, result.traitsTriggered);
+
   return {
     ...result,
     players: allPlayers,
@@ -209,12 +398,17 @@ const resolveDirectCombat = (
   damage: number,
   allPlayers: { [key: string]: IPlayer },
   game: IGame,
+  isMinionCombat: boolean = false,
 ) => {
   const playerCount = Object.keys(allPlayers).length;
   const updatedAttacker = { ...attacker };
   const updatedTarget = { ...target };
 
   const traitsTriggered: ITraitEffectLog[] = [];
+
+  const tailTraitUsed = isMinionCombat
+    ? target.hasUsedMinionTailRegrowth
+    : target.hasUsedTailRegrowth;
 
   applyPreOutcomeEffects(updatedAttacker, updatedTarget);
 
@@ -226,16 +420,28 @@ const resolveDirectCombat = (
   );
   const evolutionValid = _canAttackBasedOnEvolutionCards(attacker, target);
 
+  updatedAttacker.hasFought = true;
+  updatedTarget.hasFought = true;
+  updatedAttacker.isResting = true;
+
   const success = (elementValid || evolutionValid) && !updatedTarget.protected;
 
   if (success) {
     updatedAttacker.hp += damage;
-    updatedAttacker.isResting = true;
-
-    updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
-    updatedTarget.protected = game.round === undefined || game.round <= 3;
-
-    updateDeathStatus(updatedTarget);
+    // Check if target used TAIL_REGROWTH trait
+    triggerTailRegrowthTrait(updatedAttacker, updatedTarget, traitsTriggered);
+    if (
+      !(
+        updatedTarget.evolutionCards?.includes(
+          EVOLUTION_TRAITS.TAIL_REGROWTH,
+        ) && tailTraitUsed
+      )
+    ) {
+      // Normal damage application
+      updatedTarget.hp = Math.max(0, updatedTarget.hp - damage);
+      updatedTarget.protected = game.round === undefined || game.round <= 2;
+      updateDeathStatus(updatedTarget);
+    }
 
     applyAfterCombatEffects(
       updatedAttacker,
@@ -245,9 +451,9 @@ const resolveDirectCombat = (
       allPlayers,
     );
   } else {
+    // Attack failed - attacker takes damage, target gains HP
     updatedAttacker.hp = Math.max(0, updatedAttacker.hp - damage);
-    updatedAttacker.isResting = true;
-    updatedAttacker.protected = true;
+    updatedAttacker.protected = game.round === undefined || game.round <= 2;
     updateDeathStatus(updatedAttacker);
 
     updatedTarget.hp += damage;
@@ -322,78 +528,4 @@ const _canAttackBasedOnEvolutionCards = (
   )
     return true;
   return false;
-};
-
-/**
- * Apply evolution trait effects that occur before the combat result is determined.
- * Example: SHARP_SPIKES — attacker takes damage before attacking.
- */
-const applyPreOutcomeEffects = (
-  updatedAttacker: IPlayer,
-  updatedTarget: IPlayer,
-) => {
-  if (updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.SHARP_SPIKES)) {
-    updatedAttacker.hp = Math.max(0, updatedAttacker.hp - 2);
-  }
-
-  // Future traits can go here...
-};
-
-const applyAfterCombatEffects = (
-  updatedAttacker: IPlayer,
-  updatedTarget: IPlayer,
-  success: boolean,
-  traitsTriggered: ITraitEffectLog[],
-  allPlayers: { [key: string]: IPlayer },
-) => {
-  // BLOODTHIRSTY: attacker gains HP, target takes more damage
-  if (
-    updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY) ||
-    updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY)
-  ) {
-    const victor = success ? updatedAttacker : updatedTarget;
-    const loser = success ? updatedTarget : updatedAttacker;
-
-    victor.hp += 2;
-    triggerParasiticEffect(victor, 2, allPlayers, traitsTriggered);
-    loser.hp = Math.max(0, loser.hp - 2);
-
-    traitsTriggered.push(
-      {
-        trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
-        sourceId: victor.id,
-        targetId: victor.id,
-        damage: -2,
-        note: `BLOODTHIRSTY: healed victor ${victor.nickname}`,
-      },
-      {
-        trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
-        sourceId: victor.id,
-        targetId: loser.id,
-        damage: 2,
-        note: `BLOODTHIRSTY: dealt extra damage to loser ${loser.nickname}`,
-      },
-    );
-  }
-
-  // DEADLY_POISON: if target dies, attacker also dies
-  if (
-    updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.DEADLY_POISON) &&
-    updatedTarget.hp === 0
-  ) {
-    updatedAttacker.hp = 0;
-
-    traitsTriggered.push({
-      trait: EVOLUTION_TRAITS.DEADLY_POISON,
-      sourceId: updatedTarget.id,
-      targetId: updatedAttacker.id,
-      damage: updatedAttacker.hp,
-      note: `DEADLY_POISON: ${updatedTarget.nickname}'s trait killed ${updatedAttacker.nickname}`,
-    });
-  }
-
-  // HIBERNATION: attacker becomes protected after successful attack
-  if (updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.HIBERNATION)) {
-    updatedAttacker.protected = true;
-  }
 };

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePlayers } from "@/utils";
+import { getTraitLabel } from "@/utils/labelHelper";
 import { Activity, TrendingUp } from "lucide-react";
 
 export const AdminLogViewer = () => {
@@ -20,7 +21,7 @@ export const AdminLogViewer = () => {
   const { data: players } = usePlayers();
 
   const getPlayerName = (playerId: string) => {
-    if (!players || !players[playerId]) return `玩家 ${playerId}`;
+    if (!players || !players[playerId]) return playerId;
     return `${players[playerId].number} ${players[playerId].nickname}`;
   };
 
@@ -32,6 +33,15 @@ export const AdminLogViewer = () => {
       minute: "2-digit",
       second: "2-digit",
     });
+  };
+
+  const formatHpDiff = (damage: number) => {
+    if (damage > 0) {
+      return `-${damage}`;
+    } else if (damage < 0) {
+      return `+${Math.abs(damage)}`;
+    }
+    return "0";
   };
 
   const renderCombatLogs = () => {
@@ -53,6 +63,26 @@ export const AdminLogViewer = () => {
         <div className="space-y-3">
           {logs.map((log) => {
             if (log.type === "trait-effect") {
+              // Get player names with fallback
+              const sourceName = getPlayerName(log.sourceId);
+              const targetName = log.targetId
+                ? getPlayerName(log.targetId)
+                : null;
+
+              // Get trait label with fallback
+              const traitLabel = getTraitLabel(log.trait) || log.trait;
+
+              // Format HP difference
+              const hpDiff = formatHpDiff(log.damage || 0);
+
+              // Generate localized description
+              let description;
+              if (targetName && log.targetId !== log.sourceId) {
+                description = `${sourceName} 觸發了 ${traitLabel}，影響了 ${targetName}（${hpDiff}）`;
+              } else {
+                description = `${sourceName} 觸發了 ${traitLabel}（${hpDiff}）`;
+              }
+
               return (
                 <div
                   key={log.id}
@@ -69,9 +99,7 @@ export const AdminLogViewer = () => {
                       {formatTimestamp(log.timestamp)}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed">
-                    {log.note || `${log.trait} 觸發`}
-                  </p>
+                  <p className="mt-2 text-sm leading-relaxed">{description}</p>
                 </div>
               );
             }

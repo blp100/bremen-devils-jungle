@@ -15,14 +15,18 @@ export interface IPlayer {
   elementCount: number;
   hp: number;
   protected: boolean;
+  hasFought?: boolean;
   isResting: boolean;
   isPassed: boolean;
   isDead: boolean;
   attackCards: { [playerNumber: number]: number };
-  evolutionCards: string[];
+  evolutionCards: EVOLUTION_TRAITS[];
   minionId?: string; // for LION_KING
   parasiticTargetId?: string; // for PARASITIC
+  hasUsedTailRegrowth?: boolean; // for TAIL_REGROWTH
+  hasUsedMinionTailRegrowth?: boolean; // for minion attack on TAIL_REGROWTH
 }
+
 export interface IGame {
   createdAt: string;
   status: GAME_STATUS;
