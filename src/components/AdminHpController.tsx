@@ -112,6 +112,8 @@ const PlayerHpEditor = ({
       const updatePayload: Partial<IPlayer> = {
         hp,
         isDead: hp <= 0,
+        // if player is revival
+        evolutionCards: player.hp <= 0 && hp > 0 ? [] : player.evolutionCards,
       };
 
       await updateData(`players/${player.id}`, updatePayload);
