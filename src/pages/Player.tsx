@@ -4,8 +4,9 @@ import { useParams } from "react-router";
 import { PlayerCard } from "@/components/PlayerCard";
 import { usePlayer } from "../utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, AlertCircle, ArrowLeft } from "lucide-react";
+import { Loader2, AlertCircle, ArrowLeft, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getPlayerTypeLabel } from "@/utils/labelHelper";
 
 const Player = () => {
   const params = useParams();
@@ -60,14 +61,6 @@ const Player = () => {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="w-full max-w-screen-sm mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <Button
-              onClick={handleGoBack}
-              variant="ghost"
-              size="sm"
-              className="h-9 w-9 p-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
             <div>
               <h1 className="text-lg font-semibold text-foreground">
                 玩家資料
@@ -83,48 +76,34 @@ const Player = () => {
       {/* Player Card */}
       <div className="w-full max-w-screen-sm mx-auto p-4">
         <PlayerCard player={player} showDetailed={true} />
-      </div>
 
-      {/* Additional Game Info */}
-      <Card className="mt-4 border-0 shadow-sm">
-        <CardContent className="p-4 space-y-3">
-          <h3 className="font-semibold text-base">遊戲資訊</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">玩家 ID</span>
-              <p className="font-mono text-xs bg-muted px-2 py-1 rounded mt-1">
-                {player.id}
-              </p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">元素類型</span>
-              <p className="font-medium mt-1">
-                {player.type} • 數量 {player.elementCount}
-              </p>
-            </div>
-          </div>
+        {/* Game Information Section - Refactored */}
+        <Card className="mt-4 border-0 shadow-sm">
+          <CardContent className="p-4 space-y-4">
+            <h3 className="font-semibold text-base flex items-center gap-2">
+              <Gamepad2 className="h-4 w-4 text-primary" />
+              遊戲資訊
+            </h3>
 
-          {/* Attack Cards Info */}
-          {player.attackCards && Object.keys(player.attackCards).length > 0 && (
-            <div>
-              <span className="text-muted-foreground text-sm">攻擊卡片</span>
-              <div className="mt-2 space-y-1">
-                {Object.entries(player.attackCards).map(
-                  ([targetNumber, count]) => (
-                    <div
-                      key={targetNumber}
-                      className="flex justify-between text-sm"
-                    >
-                      <span>對玩家 {targetNumber}</span>
-                      <span className="font-medium">{count} 張</span>
-                    </div>
-                  ),
-                )}
+            {/* Element Type Info */}
+            <div className="bg-muted/30 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm text-muted-foreground">元素類型</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold text-base">
+                    {getPlayerTypeLabel(player.type)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    元素 {player.elementCount}
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
