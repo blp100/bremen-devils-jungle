@@ -1,36 +1,36 @@
-import { useState } from "react";
+"use client";
 
-import { createPlayer } from "../utils";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { JoinScreen } from "@/components/JoinScreen";
+import { createPlayer, useGame } from "../utils";
+import { GAME_STATUS } from "@/constants";
 
 const Join = () => {
-  const [nickname, setNickname] = useState("");
-  const isValid = nickname.length > 0 && nickname.length <= 20;
+  const [isJoining, setIsJoining] = useState(false);
+  const { data: game } = useGame();
+  const navigate = useNavigate();
 
-  return (
-    <div>
-      <h1>Join Page</h1>
-      <form>
-        <input
-          type="text"
-          name="nickname"
-          placeholder="Nickname"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-        />
-        <button
-          type="submit"
-          disabled={!isValid}
-          onClick={async (e) => {
-            e.preventDefault();
-            const playerId = await createPlayer(nickname);
-            window.location.href = `/player/${playerId}`;
-          }}
-        >
-          Submit
-        </button>
-      </form>
-    </div>
-  );
+  useEffect(() => {
+    if (game && game.status !== GAME_STATUS.JOINING) {
+      navigate("/");
+    }
+  }, [game, isJoining, navigate]);
+
+  const handleJoin = async (nickname: string) => {
+    setIsJoining(true);
+    try {
+      const playerId = await createPlayer(nickname);
+      window.location.href = `/player/${playerId}`;
+    } catch (error) {
+      console.error("Failed to create player:", error);
+      setIsJoining(false);
+    }
+  };
+
+  if (isJoining || !game) return null;
+
+  return <JoinScreen onJoin={handleJoin} isJoining={isJoining} />;
 };
 
 export default Join;
