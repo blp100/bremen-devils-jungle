@@ -83,51 +83,48 @@ const Player = () => {
       {/* Player Card */}
       <div className="w-full max-w-screen-sm mx-auto p-4">
         <PlayerCard player={player} showDetailed={true} />
+      </div>
 
-        {/* Additional Game Info */}
-        <Card className="mt-4 border-0 shadow-sm">
-          <CardContent className="p-4 space-y-3">
-            <h3 className="font-semibold text-base">遊戲資訊</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">玩家 ID</span>
-                <p className="font-mono text-xs bg-muted px-2 py-1 rounded mt-1">
-                  {player.id}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">元素類型</span>
-                <p className="font-medium mt-1">
-                  {player.type} • 數量 {player.elementCount}
-                </p>
+      {/* Additional Game Info */}
+      <Card className="mt-4 border-0 shadow-sm">
+        <CardContent className="p-4 space-y-3">
+          <h3 className="font-semibold text-base">遊戲資訊</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">玩家 ID</span>
+              <p className="font-mono text-xs bg-muted px-2 py-1 rounded mt-1">
+                {player.id}
+              </p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">元素類型</span>
+              <p className="font-medium mt-1">
+                {player.type} • 數量 {player.elementCount}
+              </p>
+            </div>
+          </div>
+
+          {/* Attack Cards Info */}
+          {player.attackCards && Object.keys(player.attackCards).length > 0 && (
+            <div>
+              <span className="text-muted-foreground text-sm">攻擊卡片</span>
+              <div className="mt-2 space-y-1">
+                {Object.entries(player.attackCards).map(
+                  ([targetNumber, count]) => (
+                    <div
+                      key={targetNumber}
+                      className="flex justify-between text-sm"
+                    >
+                      <span>對玩家 {targetNumber}</span>
+                      <span className="font-medium">{count} 張</span>
+                    </div>
+                  ),
+                )}
               </div>
             </div>
-
-            {/* Attack Cards Info */}
-            {player.attackCards &&
-              Object.keys(player.attackCards).length > 0 && (
-                <div>
-                  <span className="text-muted-foreground text-sm">
-                    攻擊卡片
-                  </span>
-                  <div className="mt-2 space-y-1">
-                    {Object.entries(player.attackCards).map(
-                      ([targetNumber, count]) => (
-                        <div
-                          key={targetNumber}
-                          className="flex justify-between text-sm"
-                        >
-                          <span>對玩家 {targetNumber}</span>
-                          <span className="font-medium">{count} 張</span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </div>
-              )}
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

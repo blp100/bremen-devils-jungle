@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Shield, SkipForward, Skull, Crown, Bug } from "lucide-react";
 import { getPlayerTypeLabel, getTraitLabel } from "@/utils/labelHelper";
 import type { IPlayer } from "@/interfaces";
-import { EVOLUTION_TRAITS } from "@/constants";
 
 interface PlayerCardProps {
   player: IPlayer;
@@ -18,8 +17,6 @@ export const PlayerCard = ({
   showDetailed = false,
   className = "",
 }: PlayerCardProps) => {
-  const hpPercentage = Math.max(0, Math.min(100, (player.hp / 25) * 100));
-
   return (
     <Card
       className={`border-0 shadow-sm hover:shadow-md transition-shadow ${className} ${
@@ -66,7 +63,7 @@ export const PlayerCard = ({
           )}
         </div>
 
-        {/* HP Section */}
+        {/* HP Section - New Design */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -83,27 +80,70 @@ export const PlayerCard = ({
                 血量
               </span>
             </div>
-            <span
-              className={`text-lg font-bold ${player.isDead ? "text-gray-500 dark:text-gray-400" : ""}`}
-            >
-              {player.hp}
-            </span>
           </div>
 
-          {/* HP Bar */}
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-              className={`h-2 rounded-full transition-all duration-300 ${
-                player.isDead
-                  ? "bg-gray-400 dark:bg-gray-500"
-                  : hpPercentage > 60
-                    ? "bg-green-500"
-                    : hpPercentage > 30
-                      ? "bg-yellow-500"
-                      : "bg-red-500"
-              }`}
-              style={{ width: `${hpPercentage}%` }}
-            />
+          {/* HP Visual Display */}
+          <div className="flex items-center justify-between">
+            {/* Large HP Number */}
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-3xl font-bold ${
+                  player.isDead
+                    ? "text-gray-400 dark:text-gray-500"
+                    : player.hp <= 5
+                      ? "text-red-600 dark:text-red-400"
+                      : player.hp <= 12
+                        ? "text-orange-500 dark:text-orange-400"
+                        : "text-green-600 dark:text-green-400"
+                }`}
+              >
+                {player.hp}
+              </span>
+
+              {/* Status Indicator */}
+              <div>
+                {player.isDead ? (
+                  <span className="text-red-600 dark:text-red-400 font-medium">
+                    已死亡
+                  </span>
+                ) : (
+                  <span className="font-medium">HP</span>
+                )}
+              </div>
+            </div>
+
+            {/* Heart Icons Visual */}
+            <div className="flex flex-wrap justify-end gap-0.5 max-w-[120px]">
+              {Array.from(
+                { length: Math.ceil(Math.max(player.hp, 1) / 5) },
+                (_, i) => {
+                  const heartsInGroup = Math.min(
+                    5,
+                    Math.max(0, player.hp - i * 5),
+                  );
+                  return (
+                    <div key={i} className="flex">
+                      {Array.from({ length: 5 }, (_, j) => (
+                        <Heart
+                          key={j}
+                          className={`h-2.5 w-2.5 ${
+                            j < heartsInGroup
+                              ? player.isDead
+                                ? "text-gray-300 dark:text-gray-600 fill-gray-300 dark:fill-gray-600"
+                                : player.hp <= 5
+                                  ? "text-red-500 dark:text-red-400 fill-red-500 dark:fill-red-400"
+                                  : player.hp <= 12
+                                    ? "text-orange-400 dark:text-orange-300 fill-orange-400 dark:fill-orange-300"
+                                    : "text-green-500 dark:text-green-400 fill-green-500 dark:fill-green-400"
+                              : "text-gray-200 dark:text-gray-700"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  );
+                },
+              )}
+            </div>
           </div>
         </div>
 
@@ -159,7 +199,7 @@ export const PlayerCard = ({
                   variant="outline"
                   className={`text-xs px-2 py-1 ${player.isDead ? "opacity-50" : ""}`}
                 >
-                  {getTraitLabel(trait as EVOLUTION_TRAITS)}
+                  {getTraitLabel(trait)}
                 </Badge>
               ))}
             </div>
