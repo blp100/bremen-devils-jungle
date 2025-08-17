@@ -7,13 +7,7 @@ import Join from "./Join";
 const Home = () => {
   const { data: game } = useGame();
 
-  return (
-    <div>
-      <h1>Home Page</h1>
-      <pre>{JSON.stringify(game, null, 2)}</pre>
-      {game?.status === GAME_STATUS.JOINING && <Join />}
-    </div>
-  );
+  return <>{game?.status === GAME_STATUS.JOINING && <Join />}</>;
 };
 
 export default Home;
