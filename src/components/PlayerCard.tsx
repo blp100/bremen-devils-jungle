@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Shield, SkipForward, Skull, Crown, Bug } from "lucide-react";
+import { Heart, Shield, SkipForward, Skull } from "lucide-react";
 import { getPlayerTypeLabel, getTraitLabel } from "@/utils/labelHelper";
 import type { IPlayer } from "@/interfaces";
 
@@ -12,11 +12,7 @@ interface PlayerCardProps {
   className?: string;
 }
 
-export const PlayerCard = ({
-  player,
-  showDetailed = false,
-  className = "",
-}: PlayerCardProps) => {
+export const PlayerCard = ({ player, className = "" }: PlayerCardProps) => {
   return (
     <Card
       className={`border-0 shadow-sm hover:shadow-md transition-shadow ${className} ${
@@ -203,36 +199,6 @@ export const PlayerCard = ({
                 </Badge>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Special Relationships */}
-        {showDetailed && (player.minionId || player.parasiticTargetId) && (
-          <div className="space-y-1 pt-2 border-t border-border">
-            {player.minionId && (
-              <div
-                className={`flex items-center gap-1 text-xs ${
-                  player.isDead
-                    ? "text-gray-400 dark:text-gray-500"
-                    : "text-muted-foreground"
-                }`}
-              >
-                <Crown className="h-3 w-3" />
-                <span>手下：玩家 {player.minionId}</span>
-              </div>
-            )}
-            {player.parasiticTargetId && (
-              <div
-                className={`flex items-center gap-1 text-xs ${
-                  player.isDead
-                    ? "text-gray-400 dark:text-gray-500"
-                    : "text-muted-foreground"
-                }`}
-              >
-                <Bug className="h-3 w-3" />
-                <span>寄生目標：玩家 {player.parasiticTargetId}</span>
-              </div>
-            )}
           </div>
         )}
       </CardContent>

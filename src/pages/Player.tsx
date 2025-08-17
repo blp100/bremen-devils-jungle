@@ -176,7 +176,7 @@ const Player = () => {
 
       <div className="w-full max-w-screen-sm mx-auto p-4 space-y-4">
         {/* Player Card */}
-        <PlayerCard player={player} showDetailed={true} />
+        <PlayerCard player={player} />
 
         {/* Trait Target Selection Section */}
         {shouldShowTraitSelection && (
