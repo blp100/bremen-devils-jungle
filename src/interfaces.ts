@@ -5,7 +5,11 @@ import type {
   EVOLUTION_TRAITS,
 } from "./constants";
 
-export type IGameStage = IDiscussionStage | ICombatStage | IEvolutionStage;
+export type IGameStage =
+  | IDiscussionStage
+  | ICombatStage
+  | IEvolutionStage
+  | IPreparationStage;
 
 export interface IPlayer {
   id: string;
@@ -53,6 +57,10 @@ interface ICombatStage extends IBaseGameStage {
 
 interface IEvolutionStage extends IBaseGameStage {
   type: GAME_STAGE_TYPE.EVOLUTION;
+}
+
+interface IPreparationStage extends IBaseGameStage {
+  type: GAME_STAGE_TYPE.PREPARATION;
 }
 
 export interface ITraitEffectLog {

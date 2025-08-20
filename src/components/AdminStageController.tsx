@@ -116,6 +116,8 @@ export const AdminStageController = () => {
         return "戰鬥階段";
       case "evolution":
         return "進化階段";
+      case "preparation":
+        return "準備階段";
       default:
         return "未知階段";
     }

@@ -137,6 +137,7 @@ const Player = () => {
   const currentStageIndex = game?.stageIndex ?? 0;
   const currentStage = GAME_STAGES[currentStageIndex];
   const isDiscussionStage = currentStage?.type === GAME_STAGE_TYPE.DISCUSSION;
+  const isPreparationStage = currentStage?.type === GAME_STAGE_TYPE.PREPARATION;
   const hasParasitic = player.evolutionCards?.includes(
     EVOLUTION_TRAITS.PARASITIC,
   );
@@ -176,7 +177,7 @@ const Player = () => {
 
       <div className="w-full max-w-screen-sm mx-auto p-4 space-y-4">
         {/* Player Card */}
-        <PlayerCard player={player} />
+        <PlayerCard player={player} showDetailed={!isPreparationStage} />
 
         {/* Trait Target Selection Section */}
         {shouldShowTraitSelection && (
@@ -386,23 +387,26 @@ const Player = () => {
               <Gamepad2 className="h-4 w-4 text-primary" />
               遊戲資訊
             </h3>
-
             {/* Element Type Info */}
-            <div className="bg-muted/30 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="text-sm text-muted-foreground">元素類型</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold text-base">
-                    {getPlayerTypeLabel(player.type)}
+            {!isPreparationStage && (
+              <div className="bg-muted/30 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm text-muted-foreground">
+                      元素類型
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    元素 {player.elementCount}
+                  <div className="text-right">
+                    <div className="font-semibold text-base">
+                      {getPlayerTypeLabel(player.type)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      元素 {player.elementCount}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
