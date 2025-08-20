@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/ThemeProvider";
 import { resetGame } from "@/utils";
-import { Menu, Moon, Sun, RotateCcw, Monitor } from "lucide-react";
+import { Menu, Moon, Sun, RotateCcw, Monitor, QrCode } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export const AdminMenu = () => {
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleResetGame = async () => {
@@ -36,6 +38,11 @@ export const AdminMenu = () => {
       setTheme("light");
       toast.success("已切換至淺色模式");
     }
+    setIsOpen(false);
+  };
+
+  const handleJoinLinks = () => {
+    navigate("/admin/join-links");
     setIsOpen(false);
   };
 
@@ -71,6 +78,10 @@ export const AdminMenu = () => {
         <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
           {getThemeIcon()}
           <span className="ml-2">{getThemeText()}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleJoinLinks} className="cursor-pointer">
+          <QrCode className="h-4 w-4" />
+          <span className="ml-2">玩家重新加入連結</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
