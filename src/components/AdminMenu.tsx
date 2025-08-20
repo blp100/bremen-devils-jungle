@@ -81,7 +81,7 @@ export const AdminMenu = () => {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleJoinLinks} className="cursor-pointer">
           <QrCode className="h-4 w-4" />
-          <span className="ml-2">Join Links</span>
+          <span className="ml-2">玩家重新加入連結</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
