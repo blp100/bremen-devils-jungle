@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { usePlayers } from "../utils";
@@ -23,14 +23,34 @@ const AdminJoinLinks = () => {
   const { data: players, loading } = usePlayers();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isHighlighted, setIsHighlighted] = useState(false);
+
+  // Ref for the QR code section
+  const qrCodeSectionRef = useRef<HTMLDivElement>(null);
 
   const handleBack = () => {
     navigate("/admin");
   };
 
   const handlePlayerSelect = (playerId: string) => {
+    const isNewSelection = selectedPlayerId !== playerId;
     setSelectedPlayerId(selectedPlayerId === playerId ? null : playerId);
     setCopied(false);
+
+    // If selecting a new player, scroll to QR code section
+    if (isNewSelection) {
+      // Small delay to ensure the content is rendered
+      setTimeout(() => {
+        qrCodeSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+
+        // Add highlight animation
+        setIsHighlighted(true);
+        setTimeout(() => setIsHighlighted(false), 1500);
+      }, 100);
+    }
   };
 
   const handleCopyLink = async (link: string) => {
@@ -48,6 +68,13 @@ const AdminJoinLinks = () => {
   const getPlayerJoinLink = (playerId: string) => {
     return `${window.location.origin}/player/${playerId}`;
   };
+
+  // Reset highlight when component unmounts or selectedPlayerId changes
+  useEffect(() => {
+    if (!selectedPlayerId) {
+      setIsHighlighted(false);
+    }
+  }, [selectedPlayerId]);
 
   if (loading) {
     return (
@@ -115,25 +142,27 @@ const AdminJoinLinks = () => {
                         key={player.id}
                         onClick={() => handlePlayerSelect(player.id)}
                         variant="outline"
-                        className={`w-full justify-start p-4 h-auto text-left transition-colors ${
+                        className={`w-full justify-start p-4 h-auto text-left transition-all duration-200 ${
                           selectedPlayerId === player.id
-                            ? "ring-2 ring-primary bg-primary/10 border-primary/20"
-                            : "hover:bg-muted/50 dark:hover:bg-muted/50"
+                            ? "ring-2 ring-primary bg-primary/10 border-primary/20 shadow-md"
+                            : "hover:bg-muted/50 dark:hover:bg-muted/50 hover:shadow-sm"
                         } ${player.isDead ? "opacity-60 bg-gray-50 dark:bg-gray-800" : ""}`}
                       >
                         <div className="flex items-center gap-3 w-full">
                           <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                               player.isDead
                                 ? "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
-                                : "bg-primary text-primary-foreground"
+                                : selectedPlayerId === player.id
+                                  ? "bg-primary text-primary-foreground shadow-sm"
+                                  : "bg-primary text-primary-foreground"
                             }`}
                           >
                             {player.number}
                           </div>
                           <div className="flex-1">
                             <div
-                              className={`font-semibold text-base ${
+                              className={`font-semibold text-base transition-colors ${
                                 player.isDead
                                   ? "text-gray-500 dark:text-gray-400 line-through"
                                   : ""
@@ -153,7 +182,7 @@ const AdminJoinLinks = () => {
                             </div>
                           </div>
                           {selectedPlayerId === player.id && (
-                            <ExternalLink className="h-4 w-4 text-primary" />
+                            <ExternalLink className="h-4 w-4 text-primary animate-in fade-in-0 slide-in-from-left-2 duration-200" />
                           )}
                         </div>
                       </Button>
@@ -165,20 +194,32 @@ const AdminJoinLinks = () => {
           </Card>
 
           {/* QR Code and Link Display */}
-          <Card>
+          <Card
+            ref={qrCodeSectionRef}
+            className={`transition-all duration-500 ${
+              isHighlighted
+                ? "ring-2 ring-primary/50 shadow-lg bg-primary/5 dark:bg-primary/10"
+                : ""
+            }`}
+          >
             <CardHeader className="pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
                 <QrCode className="h-5 w-5" />
                 加入連結與 QR 碼
+                {selectedPlayer && (
+                  <div className="ml-auto animate-in fade-in-0 slide-in-from-right-2 duration-300">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  </div>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {selectedPlayer ? (
-                <div className="space-y-6">
+                <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
                   {/* Player Info */}
-                  <div className="bg-muted/30 p-4 rounded-lg">
+                  <div className="bg-muted/30 p-4 rounded-lg border transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg font-bold">
+                      <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg font-bold shadow-sm">
                         {selectedPlayer.number}
                       </div>
                       <div>
@@ -199,16 +240,16 @@ const AdminJoinLinks = () => {
                       <Input
                         value={selectedPlayerLink}
                         readOnly
-                        className="font-mono text-sm"
+                        className="font-mono text-sm transition-colors focus:ring-2 focus:ring-primary/20"
                       />
                       <Button
                         onClick={() => handleCopyLink(selectedPlayerLink)}
                         variant="outline"
                         size="sm"
-                        className="flex-shrink-0 bg-transparent"
+                        className="flex-shrink-0 bg-transparent transition-all hover:bg-primary/10"
                       >
                         {copied ? (
-                          <Check className="h-4 w-4" />
+                          <Check className="h-4 w-4 text-green-600 animate-in zoom-in-50 duration-200" />
                         ) : (
                           <Copy className="h-4 w-4" />
                         )}
@@ -220,7 +261,11 @@ const AdminJoinLinks = () => {
                   <div className="space-y-3">
                     <div className="text-sm font-medium">QR 碼</div>
                     <div className="flex justify-center">
-                      <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div
+                        className={`bg-white p-4 rounded-lg shadow-sm border transition-all duration-300 ${
+                          isHighlighted ? "shadow-md scale-105" : ""
+                        }`}
+                      >
                         <QRCode
                           value={selectedPlayerLink}
                           size={200}
@@ -239,7 +284,7 @@ const AdminJoinLinks = () => {
                   </div>
 
                   {/* Instructions */}
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 transition-colors">
                     <div className="text-sm text-blue-800 dark:text-blue-300">
                       <div className="font-medium mb-2">使用說明：</div>
                       <ul className="space-y-1 text-xs">
