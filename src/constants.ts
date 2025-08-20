@@ -121,12 +121,18 @@ export const ROUND_TRAIT_MAP: Record<number, EVOLUTION_TRAITS[]> = {
 };
 
 export enum GAME_STAGE_TYPE {
+  PREPARATION = "preparation",
   DISCUSSION = "discussion",
   COMBAT = "combat",
   EVOLUTION = "evolution",
 }
 
 export const GAME_STAGES: IGameStage[] = [
+  // ========== Round 0 ==========
+  {
+    round: 0,
+    type: GAME_STAGE_TYPE.PREPARATION,
+  },
   // ========== Round 1 ==========
   {
     round: 1,

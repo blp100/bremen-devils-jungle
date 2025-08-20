@@ -12,7 +12,11 @@ interface PlayerCardProps {
   className?: string;
 }
 
-export const PlayerCard = ({ player, className = "" }: PlayerCardProps) => {
+export const PlayerCard = ({
+  player,
+  showDetailed,
+  className = "",
+}: PlayerCardProps) => {
   return (
     <Card
       className={`border-0 shadow-sm hover:shadow-md transition-shadow ${className} ${
@@ -42,11 +46,13 @@ export const PlayerCard = ({ player, className = "" }: PlayerCardProps) => {
               >
                 {player.nickname}
               </div>
-              <div
-                className={`text-sm text-muted-foreground ${player.isDead ? "text-gray-400 dark:text-gray-500" : ""}`}
-              >
-                {getPlayerTypeLabel(player.type)} • 元素 {player.elementCount}
-              </div>
+              {showDetailed && (
+                <div
+                  className={`text-sm text-muted-foreground ${player.isDead ? "text-gray-400 dark:text-gray-500" : ""}`}
+                >
+                  {getPlayerTypeLabel(player.type)} • 元素 {player.elementCount}
+                </div>
+              )}
             </div>
           </div>
 
