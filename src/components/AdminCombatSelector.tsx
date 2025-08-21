@@ -8,7 +8,7 @@ import clsx from "clsx";
 import { toast } from "sonner";
 import { handlePlayerAttack } from "@/services/combatServices";
 import type { IGame } from "@/interfaces";
-import { GAME_STAGE_TYPE, GAME_STAGES } from "@/constants";
+import { DEBUG_MODE, GAME_STAGE_TYPE, GAME_STAGES } from "@/constants";
 import { getTraitLabel, getPlayerTypeLabel } from "@/utils/labelHelper";
 import { updateData } from "@/services/firebaseHelpers";
 import {
@@ -584,26 +584,27 @@ export const AdminCombatSelector = ({
               重新選擇
             </Button>
           </div>
-
-          <Button
-            variant="destructive"
-            onClick={handleResetAllCombatState}
-            disabled={isResetting || isAttacking}
-            className="w-full min-h-[44px] text-sm"
-            size="lg"
-          >
-            {isResetting ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white dark:border-gray-300 border-t-transparent rounded-full animate-spin" />
-                <span>重置中...</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <RefreshCw className="h-4 w-4" />
-                <span>重置血量與戰鬥狀態</span>
-              </div>
-            )}
-          </Button>
+          {DEBUG_MODE && (
+            <Button
+              variant="destructive"
+              onClick={handleResetAllCombatState}
+              disabled={isResetting || isAttacking}
+              className="w-full min-h-[44px] text-sm"
+              size="lg"
+            >
+              {isResetting ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white dark:border-gray-300 border-t-transparent rounded-full animate-spin" />
+                  <span>重置中...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  <span>重置血量與戰鬥狀態</span>
+                </div>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
