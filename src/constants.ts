@@ -1,5 +1,7 @@
 import { IGameStage } from "./interfaces";
 
+export const DEBUG_MODE = false;
+
 export enum DB_PATH {
   GAME = "game",
   PLAYERS = "players",
