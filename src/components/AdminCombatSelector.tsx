@@ -177,7 +177,7 @@ export const AdminCombatSelector = ({
       if (decisions.minion !== undefined) {
         updatedTarget.hasUsedMinionTailRegrowth = decisions.minion;
         await updateData(`players/${targetPlayer.id}`, {
-          hasUsedTailRegrowth: decisions.minion,
+          hasUsedMinionTailRegrowth: decisions.minion,
         });
       }
 
