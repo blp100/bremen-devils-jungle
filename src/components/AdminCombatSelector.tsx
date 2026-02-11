@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { IPlayer } from "@/interfaces";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +54,9 @@ export const AdminCombatSelector = ({
   const [isPassing, setIsPassing] = useState(false);
   const [isAttacking, setIsAttacking] = useState(false);
 
+  const attackButtonRef = useRef<HTMLButtonElement | null>(null);
+  const didAutoScrollRef = useRef(false);
+
   // Combat result modal state
   const [combatResult, setCombatResult] = useState<CombatResult | null>(null);
   const [originalAttacker, setOriginalAttacker] = useState<IPlayer | null>(
@@ -105,12 +108,53 @@ export const AdminCombatSelector = ({
     }
   };
 
+  useEffect(() => {
+    // Only trigger when both attacker and target are chosen.
+    if (!attacker || !target) {
+      didAutoScrollRef.current = false;
+      return;
+    }
+
+    // Only auto-scroll once per selection cycle.
+    if (didAutoScrollRef.current) return;
+    didAutoScrollRef.current = true;
+
+    // Wait a frame so the UI (selection status + buttons) has rendered.
+    requestAnimationFrame(() => {
+      const el = attackButtonRef.current;
+      if (!el) return;
+
+      const prefersReducedMotion =
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+      el.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "center",
+      });
+
+      // Focusing can trigger an immediate scroll jump in some browsers.
+      // Use preventScroll when available, and delay slightly to let smooth scrolling run.
+      window.setTimeout(
+        () => {
+          try {
+            (el as any).focus?.({ preventScroll: true });
+          } catch {
+            el.focus?.();
+          }
+        },
+        prefersReducedMotion ? 0 : 250,
+      );
+    });
+  }, [attacker?.id, target?.id]);
+
   const handleReset = () => {
     setAttacker(null);
     setTarget(null);
     setPendingCombat(null);
     setTailRegrowthDecisions({});
     setCurrentTailType("main");
+    didAutoScrollRef.current = false;
   };
 
   // Check if Lion King has a valid minion that would attack the target
@@ -558,7 +602,14 @@ export const AdminCombatSelector = ({
                 target.isDead ||
                 isAttacking
               }
-              className="flex-1 min-h-[44px] text-sm"
+              ref={attackButtonRef}
+              className={clsx(
+                "flex-1 min-h-[44px] text-sm transition-all",
+                attacker &&
+                  target &&
+                  !isAttacking &&
+                  "ring-2 ring-primary/60 animate-pulse",
+              )}
               size="lg"
             >
               {isAttacking ? (
