@@ -54,22 +54,31 @@ const triggerBloodthirstyTrait = (
   updatedTarget: IPlayer,
   success: boolean,
   traitsTriggered: ITraitEffectLog[],
+  isLoserImmuneToDamage: boolean = false,
 ): void => {
+  // Your original rule: if either side has BLOODTHIRSTY, the winner triggers it.
+  const victor = success ? updatedAttacker : updatedTarget;
+  const loser = success ? updatedTarget : updatedAttacker;
+
   if (
     updatedAttacker.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY) ||
     updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.BLOODTHIRSTY)
   ) {
-    const victor = success ? updatedAttacker : updatedTarget;
-    const loser = success ? updatedTarget : updatedAttacker;
-
+    // Victor always heals from BLOODTHIRSTY.
     victor.hp += BLOODTHIRSTY_ADDITIONAL_AMOUNT;
-    loser.hp = Math.max(0, loser.hp - BLOODTHIRSTY_ADDITIONAL_AMOUNT);
+
+    // Loser only takes the BLOODTHIRSTY damage if they are not immune this combat (e.g. used TAIL_REGROWTH).
+    if (!isLoserImmuneToDamage) {
+      loser.hp = Math.max(0, loser.hp - BLOODTHIRSTY_ADDITIONAL_AMOUNT);
+      updateDeathStatus(loser);
+    }
 
     traitsTriggered.push({
       trait: EVOLUTION_TRAITS.BLOODTHIRSTY,
       sourceId: victor.id,
       targetId: loser.id,
-      damage: BLOODTHIRSTY_ADDITIONAL_AMOUNT,
+      // If loser is immune, we log 0 damage to avoid implying damage was applied.
+      damage: isLoserImmuneToDamage ? 0 : BLOODTHIRSTY_ADDITIONAL_AMOUNT,
     });
   }
 };
@@ -102,7 +111,7 @@ const triggerHibernationTrait = (updatedAttacker: IPlayer): void => {
 };
 
 const triggerTailRegrowthTrait = (
-  updatedAttacker: IPlayer,
+  _updatedAttacker: IPlayer,
   updatedTarget: IPlayer,
   traitsTriggered: ITraitEffectLog[],
   isMinionCombat: boolean = false,
@@ -110,17 +119,21 @@ const triggerTailRegrowthTrait = (
   const tailTraitUsed = isMinionCombat
     ? updatedTarget.hasUsedMinionTailRegrowth
     : updatedTarget.hasUsedTailRegrowth;
+
+  // If the target has TAIL_REGROWTH and chose to use it this combat, consume it and log.
   if (
     updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.TAIL_REGROWTH) &&
     tailTraitUsed
   ) {
-    updatedTarget.hasUsedTailRegrowth = false;
-    updatedTarget.hasUsedMinionTailRegrowth = isMinionCombat
-      ? false
-      : updatedTarget.hasUsedMinionTailRegrowth;
+    if (isMinionCombat) {
+      updatedTarget.hasUsedMinionTailRegrowth = false;
+    } else {
+      updatedTarget.hasUsedTailRegrowth = false;
+    }
+
     traitsTriggered.push({
       trait: EVOLUTION_TRAITS.TAIL_REGROWTH,
-      sourceId: updatedAttacker.id,
+      sourceId: updatedTarget.id,
       targetId: updatedTarget.id,
       damage: 0,
     });
@@ -273,12 +286,14 @@ const applyAfterCombatEffects = (
   success: boolean,
   traitsTriggered: ITraitEffectLog[],
   _allPlayers: { [key: string]: IPlayer },
+  isLoserImmuneToDamage: boolean = false,
 ) => {
   triggerBloodthirstyTrait(
     updatedAttacker,
     updatedTarget,
     success,
     traitsTriggered,
+    isLoserImmuneToDamage,
   );
   triggerDeadlyPoisonTrait(updatedAttacker, updatedTarget, traitsTriggered);
   triggerHibernationTrait(updatedAttacker);
@@ -429,7 +444,12 @@ const resolveDirectCombat = (
   if (success) {
     updatedAttacker.hp += damage;
     // Check if target used TAIL_REGROWTH trait
-    triggerTailRegrowthTrait(updatedAttacker, updatedTarget, traitsTriggered);
+    triggerTailRegrowthTrait(
+      updatedAttacker,
+      updatedTarget,
+      traitsTriggered,
+      isMinionCombat,
+    );
     if (
       !(
         updatedTarget.evolutionCards?.includes(
@@ -443,12 +463,17 @@ const resolveDirectCombat = (
       updateDeathStatus(updatedTarget);
     }
 
+    const targetUsedTailRegrowthThisCombat =
+      updatedTarget.evolutionCards?.includes(EVOLUTION_TRAITS.TAIL_REGROWTH) &&
+      tailTraitUsed;
+
     applyAfterCombatEffects(
       updatedAttacker,
       updatedTarget,
       success,
       traitsTriggered,
       allPlayers,
+      targetUsedTailRegrowthThisCombat,
     );
   } else {
     // Attack failed - attacker takes damage, target gains HP
@@ -464,6 +489,7 @@ const resolveDirectCombat = (
       success,
       traitsTriggered,
       allPlayers,
+      false,
     );
   }
 
@@ -482,7 +508,7 @@ const FAILED_ATTACK_MAP = {
   [PLAYER_TYPE.FIRE]: PLAYER_TYPE.WATER,
   [PLAYER_TYPE.WATER]: PLAYER_TYPE.WOOD,
   [PLAYER_TYPE.WOOD]: PLAYER_TYPE.FIRE,
-  [PLAYER_TYPE.ELECTRIC]: null, // electric can attack everyone
+  [PLAYER_TYPE.ELECTRIC]: PLAYER_TYPE.ELECTRIC, // electric can attack everyone
 };
 
 const _canAttackBasedOnElement = (

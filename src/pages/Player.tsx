@@ -401,7 +401,9 @@ const Player = () => {
                       {getPlayerTypeLabel(player.type)}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      元素 {player.elementCount}
+                      {player.elementCount !== 0
+                        ? ` • 元素 ${player.elementCount}`
+                        : ""}
                     </div>
                   </div>
                 </div>

@@ -60,8 +60,10 @@ export const AdminHpController = ({ players }: AdminHpControllerProps) => {
                         player.isDead ? "text-gray-400 dark:text-gray-500" : ""
                       }`}
                     >
-                      {getPlayerTypeLabel(player.type)} • 元素{" "}
-                      {player.elementCount}
+                      {getPlayerTypeLabel(player.type)}
+                      {player.elementCount !== 0
+                        ? ` • 元素 ${player.elementCount}`
+                        : ""}
                     </div>
                   </div>
                 </div>
@@ -162,7 +164,10 @@ const PlayerHpEditor = ({
             <div
               className={`text-sm text-muted-foreground ${player.isDead ? "text-gray-400 dark:text-gray-500" : ""}`}
             >
-              {getPlayerTypeLabel(player.type)} • 元素 {player.elementCount}
+              {getPlayerTypeLabel(player.type)}
+              {player.elementCount !== 0
+                ? ` • 元素 ${player.elementCount}`
+                : ""}
             </div>
           </div>
         </div>
