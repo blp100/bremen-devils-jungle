@@ -100,7 +100,7 @@ const getRandomPlayerAttributeList = (playerCount: number) => {
   for (let count = 1; count <= optionalElementCount; count++) {
     elementList.push({
       type: OPTIONAL_PLAYER_TYPE,
-      elementCount: count,
+      elementCount: 0,
     });
   }
 

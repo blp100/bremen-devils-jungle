@@ -420,8 +420,10 @@ export const AdminCombatSelector = ({
                       player.isDead && "text-gray-400 dark:text-gray-500",
                     )}
                   >
-                    {getPlayerTypeLabel(player.type)} • 元素{" "}
-                    {player.elementCount}
+                    {getPlayerTypeLabel(player.type)}
+                    {player.elementCount !== 0
+                      ? ` • 元素 ${player.elementCount}`
+                      : ""}
                   </div>
 
                   {(player.isResting ||
