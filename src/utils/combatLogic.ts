@@ -508,7 +508,7 @@ const FAILED_ATTACK_MAP = {
   [PLAYER_TYPE.FIRE]: PLAYER_TYPE.WATER,
   [PLAYER_TYPE.WATER]: PLAYER_TYPE.WOOD,
   [PLAYER_TYPE.WOOD]: PLAYER_TYPE.FIRE,
-  [PLAYER_TYPE.ELECTRIC]: null, // electric can attack everyone
+  [PLAYER_TYPE.ELECTRIC]: PLAYER_TYPE.ELECTRIC, // electric can attack everyone
 };
 
 const _canAttackBasedOnElement = (
